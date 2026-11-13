@@ -543,8 +543,8 @@ function drawDiver(x,y,a,kick,sur,ln){
   R(x-5,y-5,10,12,su);R(x-5,y-5,10,1,'#7b2fff');R(x-5,y+6,10,1,'#00000055');R(x-2,y-5,2,12,'#ffffff18');
   R(x-8,y-4,3,9+kick,sk);R(x+5,y-4,3,9-kick,sk);
   x+=ln||0;R(x-5,y-15,10,10,sk);R(x-5,y-6,10,1,'#0003');
-  R(x-6,y-17,12,3,ht);R(x-5,y-18,10,1,ht);R(x-7,y-15,2,5,ht);R(x+5,y-15,2,5,ht);
-  R(x-4,y-12,3,3,'#050310');R(x+1,y-12,3,3,'#050310');R(x-3,y-11,1,1,'#7fffd4');R(x+2,y-11,1,1,'#7fffd4');
+  R(x-6,y-17,12,3,'#1a1a1a');R(x-5,y-18,10,1,'#1a1a1a');R(x-7,y-15,2,5,'#1a1a1a');R(x+5,y-15,2,5,'#1a1a1a');R(x-4,y-19,8,2,'#1a1a1a');
+  R(x-4,y-12,3,3,'#fff');R(x+1,y-12,3,3,'#fff');R(x-3,y-11,1,1,'#1a1a1a');R(x+2,y-11,1,1,'#1a1a1a');
   R(x-4,y-8,2,1,'#5a3a3a');R(x+2,y-8,2,1,'#5a3a3a');R(x-1,y-7,2,1,'#3a2222');
   R(x+6,y-3,4,4,'#a8742a');R(x+7,y-2,2,2,'#ffe9a0');R(x+7,y-4,2,1,'#6b4a34');R(x+7,y-6,2,2,'#ff8a3a');
 }
@@ -558,7 +558,8 @@ function drawNight(){
   R(0,SEA-8,WW,8,'#1c2650');for(let x=0;x<WW;x+=18)R(x,SEA-8-(x*5%7),14,3,'#1c2650'); // far shore
   for(let y=SEA;y<FLOOR+20;y+=30){const k=Math.min(1,(y-SEA)/(FLOOR-SEA));R(0,y,WW,31,`rgb(${22-14*k|0},${30-20*k|0},${62-40*k|0})`)}
   for(const r of rays)for(let y=0;y<120;y+=6)R(r.x+y*.35+Math.sin(t+r.x)*3,SEA+y,r.w,6,`rgba(170,205,255,${.07-y*.0005})`);
-  for(let x=0;x<WW;x+=4){R(x,SEA+Math.round(Math.sin(x*.2+t*2)*1.2),4,1,'#6c8fd0');R(x+2,SEA+2+Math.round(Math.sin(x*.2+t*2)*1.2),2,1,'#3b5a99')}
+  for(let x=0;x<WW;x+=4){R(x,SEA+Math.round(Math.sin(x*.2+t*2)*1.2),4,1,'#7aa8e0');R(x+2,SEA+2+Math.round(Math.sin(x*.2+t*2)*1.2),2,1,'#2a4a7a')}
+  for(let i=0;i<3;i++){const fx=(t*8+i*120)%WW;R(fx,SEA+14+i*8,8,2,'rgba(120,160,220,.25)');R(fx+2,SEA+15+i*8,4,1,'rgba(120,160,220,.2)')}
   drawTerrain();drawStructs();
   R(0,FLOOR,WW,30,'#1a1730');for(let x=0;x<WW;x+=14){R(x,FLOOR-3-(x*7%5),10,5,'#241f40');R(x+2,FLOOR-3-(x*7%5),4,1,'#33305a')}
   for(const c of corals){R(c.x,c.y-6,3,6,c.c);if(c.k>0)R(c.x-3,c.y-9,3,3,c.c);if(c.k>1)R(c.x+3,c.y-11,3,5,c.c);R(c.x,c.y-7,3,1,'#ffffff44')}
@@ -572,9 +573,8 @@ function drawNight(){
   for(let x=20;x<220;x+=60){R(x,SEA-8,4,40,'#3a2a1e');R(x-2,SEA-8,8,2,'#4a3826')}
   R(14,SEA-38,4,30,'#4a3826');R(10,SEA-42,12,5,'#7fffd4');R(11,SEA-41,10,3,'#d8fff4');
   R(28,SEA-40,44,32,'#6b4a34');R(28,SEA-40,44,3,'#4a3022');R(28,SEA-40,44,1,'#8a6a4a');
-  R(32,SEA-30,10,6,'#2a1c16');R(33,SEA-29,8,2,'#ff8a3a');R(34,SEA-28,6,1,'#ffd98a');
-  R(58,SEA-28,8,4,'#4a3022');R(58,SEA-32,8,2,'#7a5236');R(62,SEA-20,4,12,'#2a1c16');
-  R(46,SEA-30,8,16,'#241a12');R(30,SEA-38,40,2,'#5a4632');R(52,SEA-38,6,8,'#8a2f3f');R(54,SEA-36,2,4,'#ffd98a');
+  for(let i=0;i<4;i++)R(30+i*10,SEA-38,1,30,'#4a3022');
+  R(46,SEA-30,8,16,'#241a12');R(30,SEA-38,40,2,'#5a4632');
   R(30,SEA-26,3,3,'#ffd98a');R(68,SEA-26,3,3,'#ffd98a');
   R(150,SEA-34,3,26,'#4a3826');R(142,SEA-44,20,11,'#e8d9b8');R(145,SEA-42,14,2,'#8a2f3f');R(145,SEA-39,14,1,'#4a3826');
   R(218,SEA-8,5,30,'#241a12');R(216,SEA-14,9,5,'#ffd98a');
@@ -585,9 +585,9 @@ function drawNight(){
   for(const f of[{y:SEA-14,a:.07},{y:SEA-30,a:.05}]){g.fillStyle=`rgba(190,205,240,${f.a})`;for(let i=0;i<3;i++){const fx=(t*6+i*130)%(WW+60)-30;g.fillRect(fx,f.y,80,9);g.fillRect(fx+10,f.y+9,60,4)}}
   drawFloats();g.restore();
   const d=Math.max(0,Math.min(1,(py-SEA)/(FLOOR-SEA))),sx=px-cx,sy=py-cy;
-  const dk=g.createRadialGradient(sx,sy,10,sx,sy,50+(1-d)*90);dk.addColorStop(0,'rgba(0,0,10,0)');dk.addColorStop(1,`rgba(0,0,10,${.32+.68*d})`);
+  const dk=g.createRadialGradient(sx,sy,10,sx,sy,50+(1-d)*90);dk.addColorStop(0,'rgba(0,0,10,0)');dk.addColorStop(1,`rgba(2,0,12,${.45+.55*d})`);
   g.fillStyle=dk;g.fillRect(0,0,W,H);
-  const gl=g.createRadialGradient(sx+8,sy,1,sx+8,sy,26);gl.addColorStop(0,'rgba(255,217,138,.3)');gl.addColorStop(1,'rgba(255,217,138,0)');g.fillStyle=gl;g.fillRect(sx-30,sy-30,70,60);if(hurt>.9)R(0,0,W,H,'rgba(255,60,60,.25)');
+  const gl=g.createRadialGradient(sx+8,sy,1,sx+8,sy,44);gl.addColorStop(0,'rgba(255,170,80,.42)');gl.addColorStop(1,'rgba(255,170,80,0)');g.fillStyle=gl;g.fillRect(sx-48,sy-48,110,100);if(hurt>.9)R(0,0,W,H,'rgba(255,60,60,.25)');
   for(const f of flares){const fx=f.x-cx,fy=f.y-cy,fg=g.createRadialGradient(fx,fy,2,fx,fy,70);fg.addColorStop(0,'rgba(255,200,120,.45)');fg.addColorStop(1,'rgba(255,200,120,0)');g.fillStyle=fg;g.fillRect(fx-72,fy-72,144,144)}
   if(curse>8)R(0,0,W,H,`rgba(120,40,160,${curse/100*.3})`);
 }
