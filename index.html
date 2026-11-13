@@ -93,6 +93,18 @@ const SPR_DATA={"diver_idle":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUAA
 function loadSpr(n){const im=new Image();im.onload=()=>{SPR[n]=im};im.onerror=()=>{};im.src=SPR_DATA[n]}
 ['diver_idle','diver_walk','diver_swim','fish_minnow','fish_kelp','fish_lantern','fish_ghost','fish_abyss','mob_jelly','mob_biter','boss_angler','boat','tile_dirt','tile_rock','tile_plank','sword_wood','item_flare','item_bottle','item_gel','item_fang','item_relic','item_lure','item_chest','item_torch'].forEach(loadSpr);
 function spr(n){const im=SPR[n];return im&&im.complete&&im.naturalWidth>0?im:null}
+/* ---------- water tile sprite: painted once onto an offscreen canvas, then TILED over the
+   water like Terraria liquid tiles. Dark haunted-fisherman palette: deep murky blue/purple,
+   no bright clean blue. Warm lantern glow stays the only warm light. ---------- */
+const waterTile=(()=>{const c=document.createElement('canvas');c.width=c.height=32;const x2=c.getContext('2d');
+x2.fillStyle='rgba(18,22,54,.88)';x2.fillRect(0,0,32,32);
+x2.fillStyle='rgba(10,12,30,.9)';x2.fillRect(3,5,6,4);x2.fillRect(20,18,8,5);x2.fillRect(12,26,5,3);x2.fillRect(26,4,4,4);
+x2.fillStyle='rgba(38,46,96,.85)';x2.fillRect(8,12,10,3);x2.fillRect(2,22,6,2);x2.fillRect(22,10,5,2);
+x2.fillStyle='rgba(28,34,72,.8)';x2.fillRect(0,14,32,2);x2.fillRect(14,0,2,32);
+x2.fillStyle='rgba(70,80,140,.5)';x2.fillRect(6,8,2,2);x2.fillRect(24,26,2,2);
+return c})();
+function drawWaterTiles(x0,x1,y0,y1,alpha){g.save();g.globalAlpha=alpha;g.imageSmoothingEnabled=false;
+for(let yy=Math.floor(y0/32)*32;yy<y1;yy+=32)for(let xx=Math.floor(x0/32)*32;xx<x1;xx+=32)g.drawImage(waterTile,xx,yy,32,32);g.restore()}
 function drawSpr(im,x,y,w,h,flip){if(!im)return false;g.imageSmoothingEnabled=false;if(flip){g.save();g.translate(Math.round(x+w),Math.round(y));g.scale(-1,1);g.drawImage(im,0,0,Math.round(w),Math.round(h));g.restore()}else g.drawImage(im,Math.round(x),Math.round(y),Math.round(w),Math.round(h));return true}
 
 let worlds=[],cur=null,delI=-1,cr={},WW=720,FLOOR=1440,drain=1,pat=1,av={skin:0,hair:0,suit:0};
@@ -209,7 +221,7 @@ function updateBoss(){
   if(hurt<=0&&d<32){hp--;breath-=2*drain;hurt=1.2;shake=14;vx=dx/d*7;vy=dy/d*7;floats.push({x:px,y:py-24,txt:'-1 HP',c:'#ff8a8a',t:0})}
 }
 function drawBoss(){
-  const b=bossFight;if(!b)return;const x=Math.round(b.x),y=Math.round(b.y);
+  const b=bossFight;if(!b)return;const x=Math.round(b.x),y=Math.round(b.y+Math.sin(b.ph)*4);
   const gr=g.createRadialGradient(x,y,2,x,y,70);gr.addColorStop(0,'rgba(255,90,90,.3)');gr.addColorStop(1,'rgba(255,90,90,0)');g.fillStyle=gr;g.fillRect(x-70,y-70,140,140);
   // Medium angler sprite (falls back to code-drawn body if the image hasn't loaded).
   {const im=spr('boss_angler');
@@ -228,6 +240,7 @@ function fishAI(f){
   const ty=f.ty,w=ty.w,dx=f.x+w/2-px,dy=f.y+4-py,d=Math.hypot(dx,dy)||1,sp=f.base=f.base||Math.abs(f.v)||.6,aware=mode==='swim'&&py>SEA+12;
   f.dir=f.dir||Math.sign(f.v)||1;
   let ax=f.dir*sp,ay=Math.sin(f.ph*.6)*.2*sp;
+  ay+=((f.depth||f.y)-f.y)*.004+Math.sin(t*.5+(f.drift||0))*.03;
   if(ty===T[0]){let n=0,sx=0,sy=0,sv=0;for(const o of fish)if(o!==f&&o.ty===ty&&Math.abs(o.x-f.x)<90&&Math.abs(o.y-f.y)<70){n++;sx+=o.x;sy+=o.y;sv+=o.v}
     if(n){ax=ax*.5+(sv/n)*.5+(sx/n-f.x)*.008;ay+=(sy/n-f.y)*.024}}
   if(aware){
@@ -408,7 +421,7 @@ function pickType(y){const d=(y-SEA)/(FLOOR-SEA),r=Math.random()-(luck*.001)-(sh
 function spawn(any){
   const dir=Math.random()<.5?1:-1;let x,y,n=0;
   do{y=SEA+50+Math.random()*(FLOOR-SEA-90);x=any?Math.random()*WW:(dir>0?-24:WW+24);n++}while(n<40&&isSolid(x,y));
-  fish.push({ty:T[pickType(y)],x,y,v:dir*(.5+Math.random()*.7),ph:Math.random()*6});
+  fish.push({ty:T[pickType(y)],x,y,v:dir*(.5+Math.random()*.7),ph:Math.random()*6,depth:y,drift:Math.random()*6.28});
 }
 
 /* ---------- menus ---------- */
@@ -652,6 +665,7 @@ function update(){
       px=Math.max(32,Math.min(400,px));bx=480;
     }else if(mode==='boat'){
       bvx+=(jv.x*3.4*(1+shrine.boat*.15)-bvx)*.07;bx+=bvx;vx=bvx;vy=0;if(Math.abs(bvx)>1&&Math.random()<.3)parts.push({x:bx-Math.sign(bvx)*36,y:SEA+4,vx:-bvx*.4,vy:-.2,l:.6,k:'foam'});
+      if(Math.abs(bvx)>.8&&Math.random()<.06)parts.push({x:bx-Math.sign(bvx)*34,y:SEA,vx:0,vy:0,l:.9,k:'ring',r:4});
       if(bx<480){bx=480;if(bvx<0)bvx=0}bx=Math.max(480,Math.min(WW-40,bx));px=bx;py=SEA-12;
     }else{
       {const a=.52*spd(),mx=5.2*spd();
@@ -681,6 +695,8 @@ function update(){
     if(breath<=0||hp<=0){die();return}
     if(!under&&nightT<=0){day++;startDay();return}
     fish.forEach(fishAI);
+    for(const f of fish){if(f.y<SEA+30&&Math.random()<.004)splash(f.x,SEA,.4);if(f.y<SEA+60&&Math.random()<.002)parts.push({x:f.x,y:f.y,vx:0,vy:-.5,l:.8,k:'bub'})}
+    if(mode==='swim'&&py>SEA&&py<SEA+24&&Math.random()<.05)parts.push({x:px,y:SEA,vx:0,vy:0,l:.9,k:'ring',r:3});
     fish=fish.filter(f=>f.x>-40&&f.x<WW+40);while(fish.length<fishN())spawn(false);
     for(const f of fish)if(Math.abs(f.x+f.ty.w/2-px)<f.ty.w/2+10&&Math.abs(f.y+4-py)<16){
       {const ti=T.indexOf(f.ty);inv[ti]++;if(ti>=3)luck=Math.min(100,luck+1);
@@ -793,7 +809,7 @@ function drawDiverCode(x,y,a,kick,sur,ln){
   R(x-14,y-38,6,8,ht);R(x-16,y-32,6,6,ht);R(x+6,y-36,4,6,ht);
 }
 function drawMobs(){
-  for(const m of mobs){const x=Math.round(m.x),y=Math.round(m.y);if(m.flash>0)R(x-18,y-18,36,36,'rgba(255,255,255,.35)');
+  for(const m of mobs){const x=Math.round(m.x),y=Math.round(m.y+Math.sin(m.ph)*3);if(m.flash>0)R(x-18,y-18,36,36,'rgba(255,255,255,.35)');
     if(m.k==='jelly'){const im=spr('mob_jelly');if(im){drawSpr(im,x-18,y-27,36,54,false);continue}}
     else{const im=spr('mob_biter');if(im){drawSpr(im,x-22,y-27,44,54,(m.dir||1)<0);continue}}
     if(m.k==='jelly'){
@@ -816,7 +832,9 @@ function drawMobs(){
   }
 }
 function drawBoat(x,b){
-  const y=Math.round(SEA+b),ln=Math.round(bvx*4);
+  const bob=Math.sin(t*1.6+x*.008)*2,tilt=Math.sin(t*1.4+x*.005)*.035;
+  g.save();g.translate(x,SEA);g.rotate(tilt);g.translate(-x,-SEA);
+  const y=Math.round(SEA+b+bob),ln=Math.round(bvx*4);
   const bim=spr('boat');
   if(bim){drawSpr(bim,x-40,y-43,80,50,false)}
   else{
@@ -827,6 +845,7 @@ function drawBoat(x,b){
   R(x-34,y-28,4,16,'#5a3b26');R(x-38+ln,y-36,12,10,'#ffd98a');R(x-36+ln,y-34,8,6,'#fff6d0');
   R(x-10,y-10,18,4,'#3d2616');R(x-14,y-16,10,8,'#6b4a34');R(x+8,y-16,8,8,'#4a3022');
   }
+  g.restore();
   const gr=g.createRadialGradient(x-32,y-30,2,x-32,y-30,40);gr.addColorStop(0,'rgba(255,200,120,.4)');gr.addColorStop(1,'rgba(255,200,120,0)');g.fillStyle=gr;g.fillRect(x-72,y-70,80,80);
 }
 function drawTerrain(){
@@ -862,24 +881,27 @@ function drawNight(){
   for(let i=0;i<10;i++){const txp=(i*260+40)%WW;pine(txp,SEA-16,70+((i*37)%60),'#0a1420','#0e1a28')}
   for(let i=0;i<6;i++){const txp=(i*300+150)%WW;pine(txp,SEA-10,110+((i*53)%70),'#0d1a24','#12262e')}
   R(0,SEA-16,WW,16,'#1c2650');for(let x=0;x<WW;x+=36)R(x,SEA-16-((x*5)%14),28,6,'#1c2650');
-  for(let y=SEA;y<FLOOR+40;y+=60){const k=Math.min(1,(y-SEA)/(FLOOR-SEA));R(0,y,WW,62,`rgb(${22-14*k|0},${30-20*k|0},${62-40*k|0})`)}
-  for(const r of rays)for(let y=0;y<240;y+=12)R(r.x+y*.35+Math.sin(t+r.x)*3,SEA+y,r.w,12,`rgba(170,205,255,${.07-y*.0005})`);
-  for(let x=0;x<WW;x+=8){R(x,SEA+Math.round(Math.sin(x*.1+t*2)*2),8,2,'#7aa8e0');R(x+4,SEA+4+Math.round(Math.sin(x*.1+t*2)*2),4,2,'#2a4a7a')}
-  for(let i=0;i<3;i++){const fx=(t*16+i*240)%WW;R(fx,SEA+28+i*16,16,4,'rgba(120,160,220,.25)');R(fx+4,SEA+30+i*16,8,2,'rgba(120,160,220,.2)')}
+  for(let y=SEA;y<FLOOR+40;y+=60){const k=Math.min(1,(y-SEA)/(FLOOR-SEA));R(0,y,WW,62,`rgb(${16-8*k|0},${18-10*k|0},${44-24*k|0})`)}
+  for(const r of rays)for(let y=0;y<240;y+=12)R(r.x+y*.35+Math.sin(t+r.x)*3,SEA+y,r.w,12,`rgba(180,190,230,${.045-y*.0003})`);
+  for(let x=0;x<WW;x+=8){R(x,SEA+Math.round(Math.sin(x*.1+t*2)*2),8,2,'#4a5a8a');R(x+4,SEA+4+Math.round(Math.sin(x*.1+t*2)*2),4,2,'#232c52')}
+  for(let i=0;i<3;i++){const fx=(t*16+i*240)%WW;R(fx,SEA+28+i*16,16,4,'rgba(90,110,170,.16)');R(fx+4,SEA+30+i*16,8,2,'rgba(90,110,170,.12)')}
   for(let i=0;i<8;i++){const rx2=WW-140+18+Math.round(Math.sin(t*2+i)*6);R(rx2,SEA+2+i*8,26-i*2,3,'rgba(241,236,208,.18)')}
   drawTerrain();drawStructs();
   R(0,FLOOR,WW,60,'#1a1730');for(let x=0;x<WW;x+=28){R(x,FLOOR-6-((x*7)%10),20,10,'#241f40');R(x+4,FLOOR-6-((x*7)%10),8,2,'#33305a')}
   for(const c of corals){R(c.x,c.y-12,6,12,c.c);if(c.k>0)R(c.x-6,c.y-18,6,6,c.c);if(c.k>1)R(c.x+6,c.y-22,6,10,c.c);R(c.x,c.y-14,6,2,'#ffffff44')}
   for(const k of kelp)for(let i=0;i<k.h;i+=6){const sx=k.x+Math.sin(t+k.ph+i*.05)*4;R(sx,k.y-i,4,6,'#2f6b55');if(i%18===0)R(sx+(i%36?4:-6),k.y-i,6,4,'#3d8a6c')}
   for(const e of eyes)if(Math.sin(t*.8+e.ph)>-.4){R(e.x,e.y,6,4,'#ff5a5a');R(e.x+12,e.y,6,4,'#ff5a5a');R(e.x,e.y,2,2,'#fff')}
-  fish.forEach(f=>fishSprite(f.x,f.y+Math.sin(f.ph),f.ty,f.dir||1,f.ph));drawFlares();drawMobs();if(bossFight)drawBoss();drawParts();
+  fish.forEach(f=>fishSprite(f.x,f.y+Math.sin(f.ph)*3,f.ty,f.dir||1,f.ph));drawFlares();drawMobs();if(bossFight)drawBoss();drawParts();
+  // Water tiles ON TOP of everything underwater: the tile sprite sinks fish, mobs and
+  // the boss into murky dark water instead of letting them sit pasted on top of it.
+  drawWaterTiles(cx, cx+viewW()+32, SEA, cy+viewH()+32, .55);
   if(altar){const ax=Math.round(altar.x),ay=Math.round(altar.y);
     R(ax-60,ay-90,12,90,'#3a2a22');R(ax+48,ay-90,12,90,'#3a2a22');R(ax-70,ay-100,140,10,'#4a3830');
     R(ax-20,ay-40,40,40,'#5a5a78');R(ax-14,ay-34,28,6,'#7fffd4');
     const ag=g.createRadialGradient(ax,ay-30,2,ax,ay-30,60);ag.addColorStop(0,'rgba(127,255,212,.4)');ag.addColorStop(1,'rgba(127,255,212,0)');g.fillStyle=ag;g.fillRect(ax-60,ay-90,120,120);
     g.font='12px "Courier New"';g.textAlign='center';g.fillStyle='#7fffd4';g.fillText(zone<4?'BOSS ALTAR — press F':'ALTAR',ax,ay-110);}
   for(const b of bubbles){const bx=b.x+Math.sin(b.y)*3;R(bx,b.y,6,6,'rgba(190,230,255,.6)');R(bx+2,b.y+2,2,2,'#fff')}
-  const sur=mode==='boat'&&py<=SEA+8,x=Math.round(px),y=Math.round(py+(sur?Math.sin(t*2)*2.4:0));
+  const sur=mode==='boat'&&py<=SEA+8,x=Math.round(px),y=Math.round(py+(sur?Math.sin(t*2)*2.4:(mode==='swim'&&py>SEA?Math.sin(t*2.2)*1.8:0)));
   {const pim=spr('tile_plank');if(pim){g.imageSmoothingEnabled=false;g.drawImage(pim,0,SEA-16,440,20)}else{R(0,SEA-16,440,20,'#4a3022');R(0,SEA-16,440,6,'#6b4a34')}}
   for(let x2=0;x2<440;x2+=32){R(x2,SEA-16,4,20,'#241a12');R(x2+8,SEA-14,16,4,'#7a5a3e')}
   for(let x2=40;x2<440;x2+=120){R(x2,SEA-16,8,80,'#3a2a1e');R(x2-4,SEA-16,16,4,'#4a3826')}
@@ -894,6 +916,13 @@ function drawNight(){
   const spn=Math.hypot(vx,vy),kk=Math.round(Math.sin(t*(5+spn*5)));
   g.save();if(hurt>0&&Math.floor(t*20)%2)g.globalAlpha=.35;if(face<0){g.translate(x*2,0);g.scale(-1,1)}
   drawDiver(x,y,av,kk,sur,Math.round(vx*face*3.2));g.restore();drawAtk();
+  // Second tile pass over the diver/boat's submerged parts, a murky wavy waterline
+  // cutting them at the surface, and drifting fog/mist above the water.
+  drawWaterTiles(cx, cx+viewW()+32, SEA, cy+viewH()+32, .22);
+  R(0,SEA-1,WW,5,'rgba(60,70,120,.16)');
+  {const vx0=Math.max(0,Math.floor(cx/8)*8),vx1=cx+viewW();
+   for(let wx=vx0;wx<vx1;wx+=8){const wy=SEA+Math.round(Math.sin(wx*.12+t*2.5)*2);R(wx,wy,8,2,'rgba(138,154,196,.6)');R(wx+4,wy+3,4,2,'rgba(74,90,138,.4)')}}
+  for(let mi=0;mi<2;mi++){const fx=(t*(6+mi*4)+mi*320)%(WW+220)-110;R(fx,SEA-30-mi*14,200,8,'rgba(140,140,190,.05)');R(fx+40,SEA-24-mi*14,140,6,'rgba(140,140,190,.04)')}
   for(const f of[{y:SEA-28,a:.07},{y:SEA-60,a:.05}]){g.fillStyle=`rgba(190,205,240,${f.a})`;for(let i=0;i<3;i++){const fx=(t*12+i*260)%(WW+120)-60;g.fillRect(fx,f.y,160,18);g.fillRect(fx+20,f.y+18,120,8)}}
   drawFloats();g.restore();
   const d=Math.max(0,Math.min(1,(py-SEA)/(FLOOR-SEA))),sx=px-cx,sy=py-cy;
