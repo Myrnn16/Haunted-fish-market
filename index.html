@@ -28,7 +28,7 @@
   #knob::before{content:"";position:absolute;left:11px;top:18px;width:6px;height:7px;background:#2a1b2e;box-shadow:20px 0 0 #2a1b2e}
   #knob::after{content:"";position:absolute;left:6px;top:30px;width:10px;height:5px;background:#ff9aa8;box-shadow:24px 0 0 #ff9aa8}
   canvas#c{width:100%;height:100%;image-rendering:pixelated;touch-action:none;display:block}
-  #hud{position:absolute;top:10px;left:12px;font-size:16px;text-shadow:0 1px 0 #000,0 0 6px #000;line-height:1.5}
+  #hud{position:absolute;top:8px;left:10px;font-size:13px;text-shadow:0 1px 0 #000,0 0 6px #000;line-height:1.3;max-width:62%}
   #air{position:absolute;top:10px;right:12px;font-size:14px;text-align:right;display:none;text-shadow:0 1px 0 #000}
   #bw{width:90px;height:14px;border:2px solid #cfe3ff;background:#0b1020;margin-top:2px;margin-left:auto}
   #bf{height:100%;width:100%;background:#5ad1ff}
@@ -42,7 +42,7 @@
   button.wood{border-color:var(--dark);background:var(--wood);color:var(--cream);box-shadow:inset 0 3px 0 #7a5236,inset 0 -3px 0 #3d2616}
   button.wood:active{background:#47301f}button.sm{padding:10px 12px}
   button.opt.on{background:#9a6a3e;border-color:#ffe9c4}
-  #msg{position:absolute;bottom:64px;left:50%;transform:translateX(-50%);font-size:14px;opacity:.95;max-width:60%;text-align:center;text-shadow:0 1px 0 #000;pointer-events:none}
+  #msg{position:absolute;top:64px;left:50%;transform:translateX(-50%);font-size:13px;opacity:.95;max-width:70%;text-align:center;text-shadow:0 1px 0 #000;pointer-events:none}
   .list{flex:1;width:100%;overflow-y:auto;display:flex;flex-direction:column;gap:8px;min-height:0}
   .card{display:flex;justify-content:space-between;align-items:center;gap:6px;background:var(--wood);border:3px solid var(--dark);box-shadow:inset 0 3px 0 #7a5236;padding:10px;text-align:left}
   .card small{opacity:.85}
@@ -96,8 +96,8 @@ let ctrlMode='mobile';
 try{ctrlMode=localStorage.getItem('hfm_controls')||'mobile'}catch(e){}
 if(ctrlMode!=='desktop')ctrlMode='mobile';
 let keys={};
-let zoom=1;try{zoom=parseFloat(localStorage.getItem('hfm_zoom'))||1}catch(e){} if(!(zoom>=.5&&zoom<=2))zoom=1;
-function setZoom(z){zoom=Math.max(.5,Math.min(2,Math.round(z*4)/4));try{localStorage.setItem('hfm_zoom',zoom)}catch(e){} const zl=$('zooml');if(zl)zl.textContent=Math.round(zoom*100)+'%';}
+let zoom=1.25;try{zoom=parseFloat(localStorage.getItem('hfm_zoom'))||1.25}catch(e){} if(!(zoom>=1&&zoom<=2))zoom=1.25;
+function setZoom(z){zoom=Math.max(1,Math.min(2,Math.round(z*4)/4));try{localStorage.setItem('hfm_zoom',zoom)}catch(e){} const zl=$('zooml');if(zl)zl.textContent=Math.round(zoom*100)+'%';}
 const viewW=()=>W/zoom, viewH=()=>H/zoom;
 function setCtrl(m){ctrlMode=m;try{localStorage.setItem('hfm_controls',m)}catch(e){}applyCtrlUI();}
 function applyCtrlUI(){const st=$('stick');if(!st)return;st.style.display=(phase==='night'&&ctrlMode==='mobile')?'block':'none';}
@@ -602,8 +602,8 @@ function update(){
   if(phase==='night'||phase==='day')updHud();
 }
 function updHud(){
-  let s=`${esc(cur?cur.name:'')}<br>Day ${day} · Coins ${coins}<br>${phase==='night'?'<span style="color:#ff6b7a">'+'♥'.repeat(Math.max(0,hp))+'<span style="opacity:.3">'+'♥'.repeat(Math.max(0,3-hp))+'</span></span><br>':''}`+T.map((f,i)=>`<span style="color:${f.c}">${f.n.split(' ')[0]} ${inv[i]}</span>`).join(' ');
-  s+=phase==='night'?`<br>${nightT>0?'Dawn in '+Math.ceil(nightT)+'s':'DAWN! Swim up!'}`+`<br>${ZONES[zone]} · Luck ${Math.round(luck)} · Tokens ${tokens}`+(order?`<br>Order: ${T[order.type].n} ${order.have}/${order.need}${order.done?' ✓':''}`:'')+(quest?`<br>Quest: ${quest.txt} ${quest.have}/${quest.need}${quest.done?' ✓':''}`:'')+(bossFight?`<br>BOSS ${bossFight.name} ${bossFight.hp}/${bossFight.max} HP`:''):`<br>Market open ${Math.ceil(dayT)}s · Stall Lv${stall}`;
+  let s=`${esc(cur?cur.name:'')} Day ${day} · Coins ${coins} ${phase==='night'?'<span style="color:#ff6b7a">'+'♥'.repeat(Math.max(0,hp))+'<span style="opacity:.3">'+'♥'.repeat(Math.max(0,3-hp))+'</span></span>':''}<br>`+T.map((f,i)=>`<span style="color:${f.c}">${f.n.split(' ')[0]} ${inv[i]}</span>`).join(' ');
+  s+=phase==='night'?`<br>${nightT>0?'Dawn '+Math.ceil(nightT)+'s':'DAWN!'} · ${ZONES[zone]} · Luck ${Math.round(luck)} · Tok ${tokens}`+(order?`<br>Order: ${T[order.type].n} ${order.have}/${order.need}${order.done?' ✓':''}`:'')+(quest?` · Quest: ${quest.txt} ${quest.have}/${quest.need}${quest.done?' ✓':''}`:'')+(bossFight?`<br>BOSS ${bossFight.name} ${bossFight.hp}/${bossFight.max} HP`:''):`<br>Market ${Math.ceil(dayT)}s · Stall Lv${stall}`;
   $('hud').innerHTML=s;
   if(phase==='night'){const hk=sel+','+inv[8]+','+inv[9];if(hk!==lastHK){lastHK=hk;renderHot()}$('cf').style.width=Math.min(100,curse)+'%';const p=Math.max(0,breath/maxB());$('bf').style.width=p*100+'%';$('bf').style.background=p<.25?'#ff6b6b':'#5ad1ff'}
 }
