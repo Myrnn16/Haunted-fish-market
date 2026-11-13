@@ -134,7 +134,7 @@ const blocked=(x,y)=>isSolid(x,y)||isSolid(x-4,y)||isSolid(x+4,y)||isSolid(x,y-6
 function toggleBoat(){
   if(phase!=='night')return;
   if(mode==='shore'){if(px>190){mode='boat';px=bx;py=SEA-6;vx=vy=0;floats.push({x:px,y:SEA-14,txt:'Set sail!',c:'#ffe27a',t:0})}return}
-  if(mode==='swim'&&px<220&&py<SEA+14){mode='shore';px=Math.max(16,Math.min(200,px));py=SEA-6;vx=vy=0;floats.push({x:px,y:SEA-14,txt:'On the dock',c:'#ffe27a',t:0});return}
+  if(mode==='swim'&&px<220&&py<SEA+14){mode='shore';px=Math.max(16,Math.min(200,px));py=SEA-25;vx=vy=0;floats.push({x:px,y:SEA-14,txt:'On the dock',c:'#ffe27a',t:0});return}
   if(mode==='boat'){mode='swim';px=bx;py=SEA-8;vy=-1.8;vx=bvx*1.2;floats.push({x:px,y:SEA-14,txt:'splash!',c:'#cfe3ff',t:0})}
   else if(Math.abs(px-bx)<22&&py<SEA+14){mode='boat';py=SEA-6;vx=vy=0;splash(px,SEA,1)}
 }
@@ -372,7 +372,7 @@ $('home').onclick=()=>{persist();showTitle()};
 /* ---------- game flow ---------- */
 function sail(){
   phase='night';fish=[];floats=[];bubbles=[];for(let i=0;i<fishN();i++)spawn(true);
-  bx=260;mode='shore';px=100;py=SEA-6;order={type:Math.random()<.6?0:1,need:2+day,have:0,done:false};breath=maxB();nightT=70;chests.forEach(c=>c.open=false);snap=1;mobs=[];parts=[];vx=vy=0;bvx=0;hurt=0;shake=0;wasUnder=false;hp=3;curse=0;atk=null;cd=0;flares=[];for(let i=0;i<mobN();i++)spawnMob();$('panel').style.display='none';
+  bx=240;mode='shore';px=100;py=SEA-25;order={type:Math.random()<.6?0:1,need:2+day,have:0,done:false};breath=maxB();nightT=70;chests.forEach(c=>c.open=false);snap=1;mobs=[];parts=[];vx=vy=0;bvx=0;hurt=0;shake=0;wasUnder=false;hp=3;curse=0;atk=null;cd=0;flares=[];for(let i=0;i<mobN();i++)spawnMob();$('panel').style.display='none';
   applyCtrlUI();jv={x:0,y:0};nightUI(1);$('btn').style.display='block';$('btn').onclick=toggleBoat;$('btn').disabled=false;$('home').style.display='block';$('air').style.display='block';
   $('msg').textContent=ctrlMode==='desktop'?`On the dock: A/D walk, W/Space jump, E board boat. Tonight: catch ${order.need} ${T[order.type].n}.`:`Walk the dock, then E to board. Tonight: catch ${order.need} ${T[order.type].n}.`;
 }
@@ -437,7 +437,7 @@ window.addEventListener('keydown',e=>{
   keys[k]=true;
   if(e.repeat)return;
   if((k==='w'||k==='arrowup')&&phase==='night'&&mode==='swim'){vy=Math.max(vy-1.1,-2.1*spd())}
-  if((k===' '||k==='w'||k==='arrowup')&&phase==='night'&&mode==='shore'&&py>=SEA-6){vy=-4.2;return}
+  if((k===' '||k==='w'||k==='arrowup')&&phase==='night'&&mode==='shore'&&py>=SEA-25){vy=-4.2;return}
   if((k==='+'||k==='='||k==='z')&&phase==='night'){setZoom(zoom+.15);return}
   if((k==='-'||k==='_'||k==='x')&&phase==='night'){setZoom(zoom-.15);return}
   if(k===' '){useItem()}
@@ -461,21 +461,21 @@ function update(){
   for(const f of floats)f.t+=1/60;floats=floats.filter(f=>f.t<1.2);
   if(phase==='night'){
     if(mode==='shore'){
-      if(jv.y<-.6&&py>=SEA-6)vy=-4.2;
+      if(jv.y<-.6&&py>=SEA-25)vy=-4.2;
       vx=jv.x*2.4;px+=vx;if(Math.abs(vx)>.1)face=Math.sign(vx);
-      vy+=.25;py+=vy;if(py>=SEA-6){py=SEA-6;vy=0}
-      if(py>=SEA-6&&px>24&&px<76)px=px<50?24:76;
-      px=Math.max(16,Math.min(200,px));bx=260;
+      vy+=.25;py+=vy;if(py>=SEA-25){py=SEA-25;vy=0}
+      if(py>=SEA-25&&px>24&&px<76)px=px<50?24:76;
+      px=Math.max(16,Math.min(200,px));bx=240;
     }else if(mode==='boat'){
       bvx+=(jv.x*1.7-bvx)*.07;bx+=bvx;vx=bvx;vy=0;if(Math.abs(bvx)>.5&&Math.random()<.3)parts.push({x:bx-Math.sign(bvx)*18,y:SEA+2,vx:-bvx*.2,vy:-.1,l:.6,k:'foam'});
-      if(bx<260){bx=260;if(bvx<0)bvx=0}bx=Math.max(260,Math.min(WW-20,bx));px=bx;py=SEA-6;
+      if(bx<240){bx=240;if(bvx<0)bvx=0}bx=Math.max(240,Math.min(WW-20,bx));px=bx;py=SEA-6;
     }else{
       {const a=.26*spd(),mx=2.6*spd();
        vx+=jv.x*a;vy+=jv.y*a+.01;vx*=.9;vy*=.9;const sp=Math.hypot(vx,vy);if(sp>mx){vx*=mx/sp;vy*=mx/sp}if(py<SEA-6&&vy<0)vy=0
        if(Math.abs(vx)>.1)face=Math.sign(vx);
        if(py>SEA+4&&Math.hypot(vx,vy)>.6&&Math.random()<.3)parts.push({x:px-vx*4,y:py,vx:0,vy:-.2,l:.8,k:'bub'});
        const nx=px+vx,ny=py+vy;if(!blocked(nx,py))px=nx;else vx*=-.3;if(!blocked(px,ny))py=ny;else vy*=-.3;
-       bvx*=.96;bx=Math.max(260,Math.min(WW-20,bx+bvx))}
+       bvx*=.96;bx=Math.max(240,Math.min(WW-20,bx+bvx))}
       px=Math.max(8,Math.min(WW-8,px));py=Math.max(SEA-40,Math.min(FLOOR-8,py));
     }
     const near=Math.abs(px-bx)<22&&py<SEA+14;
@@ -565,13 +565,13 @@ function drawNight(){
   fish.forEach(f=>fishSprite(f.x,f.y+Math.sin(f.ph),f.ty,f.dir||1,f.ph));drawFlares();drawMobs();drawParts();
   for(const b of bubbles){const bx=b.x+Math.sin(b.y)*1.5;R(bx,b.y,3,3,'rgba(190,230,255,.6)');R(bx+1,b.y+1,1,1,'#fff')}
   const sur=mode==='boat'&&py<=SEA+4,x=Math.round(px),y=Math.round(py+(sur?Math.sin(t*2)*1.2:0));
-  R(0,SEA+11,220,10,'#140a24');R(0,SEA+11,220,3,'#3a2a4a');
-  for(let x=0;x<220;x+=16){R(x,SEA+11,2,10,'#241a12');R(x+4,SEA+12,8,2,'#7a5a3e')}
-  for(let x=20;x<220;x+=60){R(x,SEA+11,4,22,'#3a2a1e');R(x-2,SEA+11,8,2,'#4a3826')}
-  R(14,SEA-38,4,52,'#4a3826');R(10,SEA-42,12,5,'#7fffd4');R(11,SEA-41,10,3,'#d8fff4');
-  R(28,SEA-40,44,51,'#3a2a1e');R(28,SEA-40,44,3,'#241a12');R(46,SEA-30,8,16,'#241a12');R(30,SEA-38,40,2,'#5a4632');
-  R(150,SEA-34,3,45,'#4a3826');R(142,SEA-44,20,11,'#e8d9b8');R(145,SEA-42,14,2,'#8a2f3f');R(145,SEA-39,14,1,'#4a3826');
-  R(218,SEA-10,5,32,'#241a12');R(216,SEA-14,9,5,'#ffd98a');
+  R(0,SEA-8,220,10,'#140a24');R(0,SEA-8,220,3,'#3a2a4a');
+  for(let x=0;x<220;x+=16){R(x,SEA-8,2,10,'#241a12');R(x+4,SEA-7,8,2,'#7a5a3e')}
+  for(let x=20;x<220;x+=60){R(x,SEA-8,4,40,'#3a2a1e');R(x-2,SEA-8,8,2,'#4a3826')}
+  R(14,SEA-38,4,30,'#4a3826');R(10,SEA-42,12,5,'#7fffd4');R(11,SEA-41,10,3,'#d8fff4');
+  R(28,SEA-40,44,32,'#3a2a1e');R(28,SEA-40,44,3,'#241a12');R(46,SEA-30,8,16,'#241a12');R(30,SEA-38,40,2,'#5a4632');
+  R(150,SEA-34,3,26,'#4a3826');R(142,SEA-44,20,11,'#e8d9b8');R(145,SEA-42,14,2,'#8a2f3f');R(145,SEA-39,14,1,'#4a3826');
+  R(218,SEA-8,5,30,'#241a12');R(216,SEA-14,9,5,'#ffd98a');
   drawBoat(Math.round(bx),Math.sin(t*2)*1.2);
   const spn=Math.hypot(vx,vy),kk=Math.round(Math.sin(t*(5+spn*5)));
   g.save();if(hurt>0&&Math.floor(t*20)%2)g.globalAlpha=.35;if(face<0){g.translate(x*2,0);g.scale(-1,1)}
