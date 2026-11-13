@@ -73,18 +73,23 @@ const SZ=['Small','Medium','Large','Extra large'],WWS=[1280,1680,2200,3200],FLS=
 const DF=['Easy','Normal','Hard','Nightmare'],DRAIN=[.75,1,1.35,1.8],PAT=[1.3,1,.8,.65];
 const SKIN=['#f6d6b5','#e8b98a','#b97a50','#7a4a30','#cfe8d0'],HAIR=['#1a1a1a','#8a2f3f','#2f6b4a','#6b4a2f','#e8d6a0'],SUIT=['#7a3a2a','#35507a','#7a355f','#357a5a','#4a4a5a'];
 const T=[
- {n:'Minnow',c:'#7fe3d6',l:'#d2fff7',d:'#3da89c',w:12,p:3},
- {n:'Lantern fish',c:'#ffd98a',l:'#fff3c8',d:'#c9953e',w:16,p:8,glow:1},
- {n:'Ghost fish',c:'#c9a6ff',l:'#efe4ff',d:'#8a63c9',w:20,p:25,glow:1}];
+ {n:'Minnow',c:'#b8bcc0',l:'#e8eaec',d:'#7a7e84',w:12,p:2,rar:'Common',use:'Sell · eat +5 air'},
+ {n:'Kelp Fish',c:'#7acb8a',l:'#d2ffd9',d:'#3f8a4f',w:14,p:5,rar:'Uncommon',use:'Bait · craft lures · eat +8 air'},
+ {n:'Lantern Fish',c:'#5aa8ff',l:'#cfe6ff',d:'#2f6bc9',w:16,p:6,rar:'Rare',use:'Orders · lures · glows'},
+ {n:'Ghost Fish',c:'#c9a6ff',l:'#efe4ff',d:'#8a63c9',w:20,p:18,rar:'Epic',use:'Big coins · special customers'},
+ {n:'Abyss Fish',c:'#ffd94a',l:'#fff3b0',d:'#c9953e',w:24,p:60,rar:'Legendary',use:'Deep zones only · huge value · boss lure'}];
+const ZONES=['Shallows','Kelp Forest','Twilight','Abyss','Trench'];
+const ZONE_DEPTH=[.35,.55,.75,.9,1];
+const BOSSNAMES=['Dread Angler','Kelp Horror','Twilight Maw','Abyss King'];
 const R=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(Math.round(x),Math.round(y),w,h)};
 function rng(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 const esc=s=>String(s).replace(/[<>&"]/g,'');
 
 let worlds=[],cur=null,delI=-1,cr={},WW=720,FLOOR=1440,drain=1,pat=1,av={skin:0,hair:0,suit:0};
-let phase='title',coins=0,day=1,inv=[0,0,0],lung=0,fins=0,t=0;
+let phase='title',coins=0,day=1,inv=[0,0,0,0,0,0,0,0,0,0],lung=0,fins=0,t=0;
 let px=360,py=SEA-12,breath=25,nightT=70,dayT=30,fish=[],floats=[],bubbles=[],custs=[],ptr=null,cx=0,cy=0,spawnT=0;
 let kelp=[],stars=[],corals=[],eyes=[],rays=[],grid=[],cols=0,rows=0,surf=[],chests=[],ruins=[],mode='boat',bx=360;
-let order=null;
+let order=null,quest=null,tokens=0,luck=0,zone=0,bosses=[0,0,0,0],stall=0,shrine={boat:0,bait:0,market:0,crew:0},lures=0,bossFight=null,altar=null;
 let vx=0,vy=0,face=1,parts=[],mobs=[],hurt=0,shake=0,bvx=0,wasUnder=false,snap=1;
 let hp=3,curse=0,sel=0,atk=null,cd=0,flares=[],hl=0,lastHK='';
 let ctrlMode='mobile';
@@ -100,7 +105,7 @@ const maxB=()=>25+10*lung,spd=()=>1+.25*fins;
 
 try{worlds=JSON.parse(localStorage.getItem('hfm_worlds')||'[]')}catch(e){worlds=[]}
 function persist(){
-  if(cur){Object.assign(cur,{coins,day,inv:inv.slice(),lung,fins,hl})}
+  if(cur){Object.assign(cur,{coins,day,inv:inv.slice(),lung,fins,hl,tokens,luck,zone,bosses:bosses.slice(),stall,shrine:{...shrine},lures})}
   try{localStorage.setItem('hfm_worlds',JSON.stringify(worlds))}catch(e){}
 }
 function gen(seed){
@@ -112,7 +117,7 @@ function gen(seed){
   for(let c=0;c<cols;c++){const n=nz(c,0)*.7+nz(c*2.3,7)*.3;surf.push(rows-3-Math.round(rows*(.06+.5*Math.pow(n,1.6))));for(let q=surf[c];q<rows;q++)grid[q*cols+c]=1}
   const carve=(x,y,rad)=>{for(let q=Math.floor(y-rad);q<=y+rad;q++)for(let c=Math.floor(x-rad);c<=x+rad;c++)if(q>0&&q<rows-3&&c>0&&c<cols-1&&(c-x)**2+(q-y)**2<=rad*rad)grid[q*cols+c]=0};
   chests=[];
-  for(let k=0,n=0;k<cols/9&&n<300;n++){
+  for(let k=0,n=0;k<cols/20&&n<300;n++){
     const c=4+(r()*(cols-8)|0),dir=r()<.5?1:-1,L=7+(r()*5|0),ex=c+dir*.9*L,ey=surf[c]+1+.35*L;
     if(ex<6||ex>cols-6||surf[Math.round(ex)]>ey-6)continue;
     let x=c,y=surf[c]+1;
@@ -121,7 +126,9 @@ function gen(seed){
   }
   ruins=[];
   for(let k=0;k<cols/14;k++){const c=3+(r()*(cols-8)|0),kind=r()*3|0;ruins.push({x:c*16,y:SEA+surf[c]*16,k:kind});
-    if(kind<2){const c2=Math.min(cols-1,c+4);chests.push({x:c2*16+8,y:SEA+surf[c2]*16,open:false,v:Math.round(20+surf[c2]/rows*50)})}}
+    if(kind===0&&r()<.4){const c2=Math.min(cols-1,c+4);chests.push({x:c2*16+8,y:SEA+surf[c2]*16,open:false,v:Math.round(20+surf[c2]/rows*50)})}}
+  // Boss altar: in a cave, deep — find it to fight the boss, or teleport with a lure.
+  {const ac=Math.floor(cols*.7),ay=surf[ac];altar={x:ac*16,y:SEA+ay*16,open:true};}
   const base=x=>SEA+surf[Math.min(cols-1,x/16|0)]*16;
   stars=Array.from({length:WW/6|0},()=>({x:r()*WW,y:r()*124,s:r()*6}));
   kelp=Array.from({length:WW/44|0},()=>{const x=r()*WW;return{x,y:base(x),h:60+r()*110,ph:r()*6}});
@@ -138,6 +145,46 @@ function toggleBoat(){
   if(mode==='boat'){mode='swim';px=bx;py=SEA-16;vy=-3.6;vx=bvx*1.2;floats.push({x:px,y:SEA-28,txt:'splash!',c:'#cfe3ff',t:0})}
   else if(Math.abs(px-bx)<44&&py<SEA+28){mode='boat';py=SEA-12;vx=vy=0;splash(px,SEA,1)}
 }
+/* ---------- boss arenas: small, simple, one boss per zone ---------- */
+let lockFloatT=0;
+function startBossFight(via){
+  if(zone>=4||bossFight)return;
+  if(via==='lure'){if(lures<=0)return;lures--}
+  const ay=SEA+(FLOOR-SEA)*.55;
+  bossFight={name:BOSSNAMES[zone],hp:24+zone*8,max:24+zone*8,x:altar?altar.x:WW*.7,y:ay-120,vx:0,vy:0,dir:1,st:'stalk',t:0,ph:0,sumT:0};
+  mode='swim';px=bossFight.x-220;py=ay-60;vx=vy=0;breath=Math.max(breath,20);
+  floats.push({x:px,y:py-40,txt:bossFight.name+'!',c:'#ff5a5a',t:0});
+  $('msg').textContent='BOSS: '+bossFight.name+' — spear it! Dodge the lunge!';
+}
+function updateBoss(){
+  const b=bossFight;if(!b)return;b.ph+=.06;b.t++;
+  const dx=px-b.x,dy=py-b.y,d=Math.hypot(dx,dy)||1;
+  const enraged=b.hp<b.max/2,sp=enraged?2.4:1.7;
+  if(b.st==='stalk'){b.vx+=dx/d*.05*sp;b.vy+=dy/d*.05*sp;if(b.t>60&&d<240){b.st='lunge';b.t=0;b.lx=dx/d;b.ly=dy/d}}
+  else if(b.st==='lunge'){if(b.t===1){b.vx=b.lx*6;b.vy=b.ly*6}if(b.t>20){b.st='rest';b.t=0}}
+  else{b.vx*=.92;b.vy*=.92;if(b.t>40)b.st='stalk',b.t=0}
+  const s2=Math.hypot(b.vx,b.vy),mx=b.st==='lunge'?6.4:sp;if(s2>mx){b.vx*=mx/s2;b.vy*=mx/s2}
+  // Arena bounds: small, simple arena around the altar.
+  const x0=b.x-320,x1=b.x+320,y0=SEA+80,y1=Math.min(FLOOR-40,b.y+220);
+  b.x=Math.max(x0,Math.min(x1,b.x+b.vx));b.y=Math.max(y0,Math.min(y1,b.y+b.vy));
+  px=Math.max(x0,Math.min(x1,px));py=Math.max(y0,Math.min(y1,py));
+  if(enraged){b.sumT+=1/60;if(b.sumT>10){b.sumT=0;mobs.push({k:'jelly',hp:2,flash:0,x:b.x+(Math.random()<.5?-60:60),y:b.y-40,vx:0,vy:0,ph:Math.random()*6,st:'wander',t:0,dir:1})}}
+  if(hurt<=0&&d<32){hp--;breath-=2*drain;hurt=1.2;shake=14;vx=dx/d*7;vy=dy/d*7;floats.push({x:px,y:py-24,txt:'-1 HP',c:'#ff8a8a',t:0})}
+}
+function drawBoss(){
+  const b=bossFight;if(!b)return;const x=Math.round(b.x),y=Math.round(b.y);
+  const gr=g.createRadialGradient(x,y,2,x,y,70);gr.addColorStop(0,'rgba(255,90,90,.3)');gr.addColorStop(1,'rgba(255,90,90,0)');g.fillStyle=gr;g.fillRect(x-70,y-70,140,140);
+  // Medium angler (not huge): ~56px body, teeth, glowing lure.
+  R(x-28,y-14,56,28,'#4a2a6a');R(x-24,y+14,48,10,'#6b3f8a');R(x-24,y-14,48,4,'#6b3f8a');
+  for(let i=0;i<5;i++)R(x-20+i*11,y-20,5,6,'#6b3f8a');
+  R(x-44,y-10,16,20,'#4a2a6a');R(x+12,y-4,20,16,'#14081e');
+  for(let i=0;i<4;i++){R(x+12+i*5,y-4,3,6,'#fff');R(x+12+i*5,y+6,3,5,'#fff')}
+  R(x+8,y-12,10,10,'#ff3030');R(x+11,y-9,3,3,'#fff');
+  R(x+4,y-26,3,14,'#4a2a6a');R(x+10,y-32,10,10,'#7fffd4');R(x+13,y-29,3,3,'#fff');
+  // Boss HP bar above the boss
+  R(x-30,y-44,60,8,'#1c0a0a');R(x-30,y-44,60*Math.max(0,b.hp/b.max),8,'#ff5a5a');
+  g.font='12px "Courier New"';g.textAlign='center';g.fillStyle='#ff8a8a';g.fillText(b.name,x,y-50);
+}
 function fishAI(f){
   const ty=f.ty,w=ty.w,dx=f.x+w/2-px,dy=f.y+4-py,d=Math.hypot(dx,dy)||1,sp=f.base=f.base||Math.abs(f.v)||.6,aware=mode==='swim'&&py>SEA+12;
   f.dir=f.dir||Math.sign(f.v)||1;
@@ -145,9 +192,9 @@ function fishAI(f){
   if(ty===T[0]){let n=0,sx=0,sy=0,sv=0;for(const o of fish)if(o!==f&&o.ty===ty&&Math.abs(o.x-f.x)<90&&Math.abs(o.y-f.y)<70){n++;sx+=o.x;sy+=o.y;sv+=o.v}
     if(n){ax=ax*.5+(sv/n)*.5+(sx/n-f.x)*.008;ay+=(sy/n-f.y)*.024}}
   if(aware){
-    if(ty===T[2]){if(d<180){if(d>56){ax=-dx/d*sp*1.1;ay=-dy/d*sp*.9}else{ax=dx/d*sp*2.2;ay=dy/d*sp*1.6}}}
+    if(ty===T[3]){if(d<180){if(d>56){ax=-dx/d*sp*1.1;ay=-dy/d*sp*.9}else{ax=dx/d*sp*2.2;ay=dy/d*sp*1.6}}}
     else if(d<(ty===T[0]?84:48)){ax=dx/d*sp*2.4;ay=dy/d*sp*1.8;if(Math.random()<.12)parts.push({x:f.x+w/2,y:f.y,vx:0,vy:-.4,l:.6,k:'bub'})}
-    else if(ty===T[1]&&d<160){ax=-dx/d*sp*.9;ay=-dy/d*sp*.7}
+    else if(ty===T[2]&&d<160){ax=-dx/d*sp*.9;ay=-dy/d*sp*.7}
   }
   f.v+=(ax-f.v)*.07;f.vy=(f.vy||0)+(ay-(f.vy||0))*.07;
   f.v=Math.max(-4,Math.min(4,f.v));f.vy=Math.max(-4,Math.min(4,f.vy));
@@ -213,10 +260,10 @@ function drawParts(){
     else{const bub=q.k==='bub',c=q.k==='spark'?(q.c||'#ffe27a'):bub?'rgba(190,230,255,.7)':q.k==='foam'?'rgba(220,235,255,.6)':'rgba(190,220,255,.9)';R(q.x,q.y,bub?4:2,bub?4:2,c)}
   }
 }
-const HOT=[{k:'harpoon',n:'Harpoon'},{k:'flare',n:'Flare',i:6},{k:'bottle',n:'Air bottle',i:7}];
-const ITEMS=[{k:'minnow',n:'Minnow',i:0,d:'Sell it at the market.'},{k:'lantern',n:'Lantern fish',i:1,d:'Glowing. Sells well.'},{k:'ghost',n:'Ghost fish',i:2,d:'Rare. Sells for a lot.'},{k:'gel',n:'Jelly gel',i:3,d:'From jellyfish. Craft flares at dusk.'},{k:'fang',n:'Biter fang',i:4,d:'From biters. Sharpens your harpoon.'},{k:'relic',n:'Abyss relic',i:5,d:'Strange old artifact. Sell it at dusk.'},{k:'flare',n:'Flare',i:6,d:'Bright light that scares monsters away.'},{k:'bottle',n:'Air bottle',i:7,d:'Tap to restore 15s of air.'}];
+const HOT=[{k:'harpoon',n:'Harpoon'},{k:'flare',n:'Flare',i:8},{k:'bottle',n:'Air bottle',i:9}];
+const ITEMS=[{k:'minnow',n:'Minnow · Common',i:0,d:'Sell · tap to eat +5 air.'},{k:'kelp',n:'Kelp Fish · Uncommon',i:1,d:'Bait · craft lures · tap to eat +8 air.'},{k:'lantern',n:'Lantern Fish · Rare',i:2,d:'Orders · lures · glows. Tap to eat +12 air.'},{k:'ghost',n:'Ghost Fish · Epic',i:3,d:'Big coins · special customers. Tap to eat +1 HP.'},{k:'abyss',n:'Abyss Fish · Legendary',i:4,d:'Deep zones only · huge value · boss lure. Tap to eat +full air.'},{k:'gel',n:'Jelly gel',i:5,d:'From jellyfish. Craft flares + boss lures at dusk.'},{k:'fang',n:'Biter fang',i:6,d:'From biters. Sharpens your harpoon · boss lures.'},{k:'relic',n:'Abyss relic',i:7,d:'Strange old artifact. Sell it at dusk.'},{k:'flare',n:'Flare',i:8,d:'Bright light that scares monsters away.'},{k:'bottle',n:'Air bottle',i:9,d:'Tap to restore 15s of air.'}];
 function drawIc(k){
-  const fc={minnow:T[0],lantern:T[1],ghost:T[2]}[k];
+  const fc={minnow:T[0],kelp:T[1],lantern:T[2],ghost:T[3],abyss:T[4]}[k];
   if(fc){R(3,6,9,5,fc.c);R(4,9,7,2,fc.l);R(1,6,3,1,fc.d);R(1,10,3,1,fc.d);R(2,7,3,3,fc.c);R(9,7,2,2,'#0b1020');R(10,7,1,1,'#fff');R(5,4,4,2,fc.d);return}
   if(k==='harpoon'){for(let i=0;i<9;i++)R(2+i,13-i,2,2,'#c89a50');R(10,3,4,4,'#e8eef8');R(12,2,3,3,'#fff');return}
   if(k==='flare'){R(6,5,4,9,'#e85a4a');R(6,5,4,2,'#ffe27a');R(7,2,2,3,'#ffd98a');R(5,1,1,1,'#ffe27a');R(10,1,1,1,'#ffe27a');return}
@@ -238,12 +285,20 @@ function renderBag(msg){
   const ig=b.querySelector('.ig');
   ITEMS.forEach(it=>{const d=document.createElement('div');d.className='cell'+(inv[it.i]?'':' empty');d.appendChild(icon(it.k,28));
     const s=document.createElement('span');s.textContent=it.n+' x'+inv[it.i];d.appendChild(s);
-    d.onclick=()=>{if(it.k==='bottle'&&inv[7]>0){useBottle();renderBag('Used an air bottle.')}else $('bd').textContent=it.d};ig.appendChild(d)});
+    d.onclick=()=>{if(it.k==='bottle'&&inv[9]>0){useBottle();renderBag('Used an air bottle.')}
+      else if(it.i<5&&inv[it.i]>0&&phase==='night'){eatFish(it.i);renderBag('Ate a '+T[it.i].n+'.')}
+      else $('bd').textContent=it.d};ig.appendChild(d)});
 }
 function toggleBag(){const b=$('bag');if(b.style.display==='flex')b.style.display='none';else{renderBag('');b.style.display='flex'}}
 $('bagb').onclick=toggleBag;
 $('act').addEventListener('pointerdown',e=>{e.preventDefault();useItem()});
-function useBottle(){if(inv[7]>0&&breath<maxB()-1){inv[7]--;breath=Math.min(maxB(),breath+15);floats.push({x:px,y:py-24,txt:'+air',c:'#5ad1ff',t:0})}}
+function useBottle(){if(inv[9]>0&&breath<maxB()-1){inv[9]--;breath=Math.min(maxB(),breath+15);floats.push({x:px,y:py-24,txt:'+air',c:'#5ad1ff',t:0})}}
+function eatFish(i){if(inv[i]<=0)return;inv[i]--;
+  if(i===0)breath=Math.min(maxB(),breath+5);else if(i===1)breath=Math.min(maxB(),breath+8);
+  else if(i===2)breath=Math.min(maxB(),breath+12);else if(i===3)hp=Math.min(3,hp+1);
+  else if(i===4)breath=maxB();
+  floats.push({x:px,y:py-24,txt:'+'+T[i].n,c:T[i].c,t:0})}
+function checkQuest(){if(!quest||quest.done)return;if(quest.have>=quest.need){quest.done=true;coins+=quest.coins;tokens+=quest.tokens;floats.push({x:px,y:py-28,txt:'Quest done! +'+quest.coins+'c +'+quest.tokens+' token',c:'#ffd94a',t:0});persist()}}
 function useItem(){
   if(phase!=='night'||$('bag').style.display==='flex')return;
   const s=HOT[sel];
@@ -251,13 +306,16 @@ function useItem(){
     if(cd>0)return;
     if(mode!=='swim'){floats.push({x:px,y:py-28,txt:'jump out!',c:'#cfe3ff',t:0});return}
     const up=Math.abs(jv.y)>.5;atk={t:0,dx:up?0:face,dy:up?Math.sign(jv.y):0,h:[]};cd=22;vx+=atk.dx*1.8;vy+=atk.dy*1.8;
-  }else if(s.k==='flare'){if(inv[6]>0){inv[6]--;flares.push({x:px,y:py,l:14});floats.push({x:px,y:py-24,txt:'flare!',c:'#ffd98a',t:0})}}
+  }else if(s.k==='flare'){if(inv[8]>0){inv[8]--;flares.push({x:px,y:py,l:14});floats.push({x:px,y:py-24,txt:'flare!',c:'#ffd98a',t:0})}}
   else useBottle();
 }
 const ext=t=>t<=6?t*8:Math.max(0,(16-t)*4.8);
 function catchFish(f){
-  inv[T.indexOf(f.ty)]++;for(let i=0;i<8;i++)parts.push({x:f.x+8,y:f.y+4,vx:(Math.random()-.5)*4,vy:-Math.random()*3.2,l:.7,k:'spark',c:f.ty.c});
-  floats.push({x:f.x,y:f.y-8,txt:'+'+f.ty.n,c:f.ty.c,t:0});fish=fish.filter(o=>o!==f);
+  const ti=T.indexOf(f.ty);inv[ti]++;
+  if(ti>=3)luck=Math.min(100,luck+1);
+  if(quest&&!quest.done&&((quest.kind==='lantern'&&ti===2)||(quest.kind==='ghost'&&ti===3)||(quest.kind==='abyss'&&ti===4)||(quest.kind==='catch'))){quest.have++;checkQuest()}
+  for(let i=0;i<8;i++)parts.push({x:f.x+8,y:f.y+4,vx:(Math.random()-.5)*4,vy:-Math.random()*3.2,l:.7,k:'spark',c:f.ty.c});
+  floats.push({x:f.x,y:f.y-8,txt:'+'+f.ty.n+' · '+f.ty.rar,c:f.ty.c,t:0});fish=fish.filter(o=>o!==f);
 }
 function updateAtk(){
   if(cd>0)cd--;
@@ -267,6 +325,8 @@ function updateAtk(){
     const L=ext(atk.t)+12;
     for(const k of[.45,.75,1]){const hx=px+atk.dx*L*k,hy=py-4+atk.dy*L*k;
       for(const m of mobs.slice())if(atk&&!atk.h.includes(m)&&Math.hypot(m.x-hx,m.y-hy)<22){atk.h.push(m);hitMob(m)}
+      if(bossFight&&atk&&!atk.h.includes(bossFight)&&Math.hypot(bossFight.x-hx,bossFight.y-hy)<36){atk.h.push(bossFight);bossFight.hp-=1+hl;bossFight.flash=8;shake=5;
+        if(bossFight.hp<=0){const bn=bossFight.name;inv[7]++;tokens+=2;bosses[zone]=1;zone=Math.min(4,zone+1);floats.push({x:bossFight.x,y:bossFight.y-40,txt:bn+' beaten! +Relic +2 tokens',c:'#ffd94a',t:0});bossFight=null;mode='shore';px=200;py=SEA-50;persist()}}
       for(const f of fish.slice())if(Math.hypot(f.x+f.ty.w/2-hx,f.y+4-hy)<20)catchFish(f)}
   }
   if(atk&&atk.t>16)atk=null;
@@ -276,8 +336,10 @@ function hitMob(m){
   shake=5;for(let i=0;i<6;i++)parts.push({x:m.x,y:m.y,vx:(Math.random()-.5)*6,vy:(Math.random()-.5)*6,l:.4,k:'spark',c:'#fff'});
   if(m.hp<=0){
     const jl=m.k==='jelly';
-    if(jl){const n=1+(Math.random()<.4?1:0);inv[3]+=n;floats.push({x:m.x,y:m.y-16,txt:'+'+n+' gel',c:'#d58cff',t:0})}
-    else{inv[4]++;floats.push({x:m.x,y:m.y-16,txt:'+fang',c:'#fff6e6',t:0});if(Math.random()<.15){inv[5]++;floats.push({x:m.x,y:m.y-36,txt:'+Relic!',c:'#7fffd4',t:0})}}
+    luck=Math.min(100,luck+2);
+    if(jl){const n=1+(Math.random()<.4?1:0);inv[5]+=n;floats.push({x:m.x,y:m.y-16,txt:'+'+n+' gel',c:'#d58cff',t:0})}
+    else{inv[6]++;floats.push({x:m.x,y:m.y-16,txt:'+fang',c:'#fff6e6',t:0});if(Math.random()<.15){inv[7]++;floats.push({x:m.x,y:m.y-36,txt:'+Relic!',c:'#7fffd4',t:0})}}
+    if(quest&&!quest.done&&quest.kind==='biter'&&!jl){quest.have++;checkQuest()}
     for(let i=0;i<12;i++)parts.push({x:m.x,y:m.y,vx:(Math.random()-.5)*6,vy:(Math.random()-.5)*6,l:.7,k:'spark',c:jl?'#d58cff':'#9a6ad0'});
     mobs=mobs.filter(o=>o!==m);
   }
@@ -288,9 +350,14 @@ function drawAtk(){
   for(let i=10;i<=e+12;i+=4)R(x+atk.dx*i-2,y+atk.dy*i-2,4,4,'#c89a50');
   const tx=x+atk.dx*(e+14),ty=y+atk.dy*(e+14);R(tx-4,ty-4,8,8,'#e8eef8');R(tx-2,ty-2,4,4,'#fff');
 }
-function fishN(){return Math.max(18,Math.round(30*WW*(FLOOR-SEA)/(720*1250)))}
-function pickType(y){const d=(y-SEA)/(FLOOR-SEA),r=Math.random();
-  if(d<.3)return r<.8?0:1;if(d<.65)return r<.3?0:(r<.85?1:2);return r<.15?0:(r<.5?1:2)}
+function fishN(){return Math.max(11,Math.round(18*WW*(FLOOR-SEA)/(720*1250)))}
+function pickType(y){const d=(y-SEA)/(FLOOR-SEA),r=Math.random()-(luck*.001)-(shrine.bait*.02);
+  // Deeper = rarer. Abyss Fish only in the Abyss/Trench (zone>=3, depth>.75).
+  if(d<.25)return r<.62?0:(r<.88?1:2);
+  if(d<.5)return r<.4?0:(r<.72?1:(r<.92?2:3));
+  if(d<.75)return r<.25?0:(r<.55?1:(r<.82?2:3));
+  if(zone>=3)return r<.12?0:(r<.32?1:(r<.6?2:(r<.86?3:4)));
+  return r<.18?0:(r<.45?1:(r<.78?2:3))}
 function spawn(any){
   const dir=Math.random()<.5?1:-1;let x,y,n=0;
   do{y=SEA+50+Math.random()*(FLOOR-SEA-90);x=any?Math.random()*WW:(dir>0?-24:WW+24);n++}while(n<40&&isSolid(x,y));
@@ -338,11 +405,14 @@ function showCreate(fresh){
 }
 function setOpt(k,v){cr[k]=v;showCreate()}
 function make(){
-  const w={name:(cr.name||'').trim()||'Unnamed',size:cr.size,diff:cr.diff,av:{skin:cr.skin,hair:cr.hair,suit:cr.suit},seed:Math.random()*1e9|0,coins:0,day:1,inv:[0,0,0,0,0,0,2,1],lung:0,fins:0,hl:0};
+  const w={name:(cr.name||'').trim()||'Unnamed',size:cr.size,diff:cr.diff,av:{skin:cr.skin,hair:cr.hair,suit:cr.suit},seed:Math.random()*1e9|0,coins:0,day:1,inv:[0,0,0,0,0,0,0,0,2,1],lung:0,fins:0,hl:0,tokens:0,luck:0,zone:0,bosses:[0,0,0,0],stall:0,shrine:{boat:0,bait:0,market:0,crew:0},lures:0};
   worlds.push(w);persist();play(worlds.length-1);
 }
 function play(i){
-  cur=worlds[i];({coins,day,lung,fins}=cur);inv=[...cur.inv,0,0,0,0,0,0].slice(0,8);av=cur.av;hl=cur.hl||0;
+  cur=worlds[i];({coins,day,lung,fins}=cur);
+  if(cur.inv&&cur.inv.length===8){const o=cur.inv;inv=[o[0],o[1],o[2],0,0,o[3],o[4],o[5],o[6],o[7]]}
+  else inv=[...(cur.inv||[]),0,0,0,0,0,0,0,0,0,0].slice(0,10);
+  av=cur.av;hl=cur.hl||0;tokens=cur.tokens||0;luck=cur.luck||0;zone=cur.zone||0;bosses=cur.bosses||[0,0,0,0];stall=cur.stall||0;shrine=cur.shrine||{boat:0,bait:0,market:0,crew:0};lures=cur.lures||0;
   WW=WWS[cur.size];FLOOR=FLS[cur.size];drain=DRAIN[cur.diff];pat=PAT[cur.diff];gen(cur.seed);
   $('home').style.display='block';
   (coins===0&&day===1&&inv.slice(0,6).every(v=>!v))?sail():dusk();
@@ -352,11 +422,16 @@ $('home').onclick=()=>{persist();showTitle()};
 /* ---------- game flow ---------- */
 function sail(){
   phase='night';fish=[];floats=[];bubbles=[];for(let i=0;i<fishN();i++)spawn(true);
-  bx=480;mode='shore';px=200;py=SEA-50;order={type:Math.random()<.6?0:1,need:2+day,have:0,done:false};breath=maxB();nightT=70;chests.forEach(c=>c.open=false);snap=1;mobs=[];parts=[];vx=vy=0;bvx=0;hurt=0;shake=0;wasUnder=false;hp=3;curse=0;atk=null;cd=0;flares=[];for(let i=0;i<mobN();i++)spawnMob();$('panel').style.display='none';
+  bx=480;mode='shore';px=200;py=SEA-50;bossFight=null;
+  {const maxT=Math.min(2+zone,4);order={type:Math.random()<.6?0:Math.floor(Math.random()*(maxT+1)),need:2+day,have:0,done:false};
+   const qs=[{kind:'catch',txt:'Catch 4 fish',need:4},{kind:'lantern',txt:'Catch a Lantern Fish',need:1},{kind:'biter',txt:'Kill a Biter',need:1},{kind:'dawn',txt:'Survive to dawn',need:1},{kind:'deep',txt:'Dive to the deep (60%)',need:1}];
+   const q=qs[Math.floor(Math.random()*qs.length)];quest={...q,have:0,done:false,coins:15+day*5,tokens:1};}
+  breath=maxB();nightT=70;chests.forEach(c=>c.open=false);snap=1;mobs=[];parts=[];vx=vy=0;bvx=0;hurt=0;shake=0;wasUnder=false;hp=3;curse=0;atk=null;cd=0;flares=[];for(let i=0;i<mobN();i++)spawnMob();$('panel').style.display='none';
   applyCtrlUI();jv={x:0,y:0};nightUI(1);$('btn').style.display='block';$('btn').onclick=toggleBoat;$('btn').disabled=false;$('home').style.display='block';$('air').style.display='block';
-  $('msg').textContent=ctrlMode==='desktop'?`On the dock: A/D walk, W/Space jump, E board boat. Tonight: catch ${order.need} ${T[order.type].n}.`:`Walk the dock, then E to board. Tonight: catch ${order.need} ${T[order.type].n}.`;
+  $('msg').textContent=ctrlMode==='desktop'?`On the dock: A/D walk, W/Space jump, E board boat. Order: ${order.need} ${T[order.type].n}. Quest: ${quest.txt}. L = boss lure.`:`Walk the dock, then E to board. Order: ${order.need} ${T[order.type].n}. Quest: ${quest.txt}.`;
 }
 function startDay(){
+  if(quest&&!quest.done&&quest.kind==='dawn'){quest.have=1;checkQuest()}
   phase='day';dayT=30;custs=[];floats=[];spawnT=1;$('air').style.display='none';$('stick').style.display='none';nightUI(0);persist();
   $('btn').style.display='block';$('btn').disabled=false;$('btn').textContent='Close shop';$('btn').onclick=toDusk;
   $('msg').textContent='Tap a customer to sell what they want.';
@@ -364,30 +439,43 @@ function startDay(){
 function toDusk(){floats=[];$('btn').style.display='none';dusk()}
 function dusk(){
   phase='dusk';persist();hideBar();
-  const lc=10+10*lung,fc=10+10*fins,hc=15+15*hl,hf=1+hl,p=$('panel');p.style.paddingRight='';p.style.display='flex';p.style.background='rgba(8,12,30,.9)';p.style.justifyContent='center';
-  p.innerHTML=`<h2>Dusk falls</h2><p>Coins: ${coins} · Gel ${inv[3]} · Fangs ${inv[4]} · Relics ${inv[5]}</p><div class="grid2">
+  const lc=15+15*lung,fc=15+15*fins,hc=25+20*hl,hf=1+hl,p=$('panel');p.style.paddingRight='';p.style.display='flex';p.style.background='rgba(8,12,30,.9)';p.style.justifyContent='center';
+  p.innerHTML=`<h2>Dusk falls</h2><p>Coins: ${coins} · Tokens: ${tokens} · Luck: ${Math.round(luck)} · Zone: ${ZONES[zone]}${zone<4?' → beat '+BOSSNAMES[zone]+' to unlock '+ZONES[zone+1]:' · all zones open'}<br>Gel ${inv[5]} · Fangs ${inv[6]} · Relics ${inv[7]} · Boss lures ${lures} · Stall Lv${stall}</p><div class="grid2">
   <button class="wood" ${lung>=5||coins<lc?'disabled':''} onclick="buy('l')">Bigger lungs Lv${lung} to ${lung+1}<br>+10s air · ${lung>=5?'MAX':lc+' coins'}</button>
   <button class="wood" ${fins>=5||coins<fc?'disabled':''} onclick="buy('f')">Strong fins Lv${fins} to ${fins+1}<br>faster swim · ${fins>=5?'MAX':fc+' coins'}</button>
-  <button class="wood" ${hl>=4||coins<hc||inv[4]<hf?'disabled':''} onclick="buy('h')">Sharper harpoon Lv${hl+1} to ${hl+2}<br>${hl>=4?'MAX':hc+' coins + '+hf+' fangs'}</button>
-  <button class="wood" ${coins<8?'disabled':''} onclick="buy('b')">Air bottle<br>8 coins</button>
-  <button class="wood" ${inv[3]<1?'disabled':''} onclick="buy('g')">Craft 2 flares<br>1 jelly gel</button>
-  <button class="wood" ${inv[5]<1?'disabled':''} onclick="buy('r')">Sell relics<br>+${inv[5]*40} coins</button></div>
+  <button class="wood" ${hl>=4||coins<hc||inv[6]<hf?'disabled':''} onclick="buy('h')">Sharper harpoon Lv${hl+1} to ${hl+2}<br>${hl>=4?'MAX':hc+' coins + '+hf+' fangs'}</button>
+  <button class="wood" ${coins<12?'disabled':''} onclick="buy('b')">Air bottle<br>12 coins</button>
+  <button class="wood" ${inv[5]<1?'disabled':''} onclick="buy('g')">Craft 2 flares<br>1 jelly gel</button>
+  <button class="wood" ${inv[7]<1?'disabled':''} onclick="buy('r')">Sell relics<br>+${inv[7]*40} coins</button>
+  <button class="wood" ${inv[5]<1||inv[6]<1?'disabled':''} onclick="buy('u')">Craft boss lure<br>1 gel + 1 fang</button>
+  <button class="wood" ${coins<40||stall>=3?'disabled':''} onclick="buy('s')">Upgrade stall Lv${stall} to ${stall+1}<br>${stall>=3?'MAX':'40 coins · +customers · +15% prices'}</button></div>
+  <h2>Shrine — tokens survive death</h2><p>Spend tokens to bless your next start. Tokens: ${tokens}</p><div class="grid2">
+  <button class="wood" ${tokens<1?'disabled':''} onclick="buy('tb')">Boat blessing Lv${shrine.boat}<br>1 token · faster boat</button>
+  <button class="wood" ${tokens<1?'disabled':''} onclick="buy('ta')">Bait blessing Lv${shrine.bait}<br>1 token · rarer fish</button>
+  <button class="wood" ${tokens<1?'disabled':''} onclick="buy('tm')">Market blessing Lv${shrine.market}<br>1 token · +15% prices</button>
+  <button class="wood" ${tokens<1?'disabled':''} onclick="buy('tc')">Crew blessing Lv${shrine.crew}<br>1 token · +1 customer</button></div>
   <button class="wood" onclick="sail()">Set sail</button>`;
 }
 function hideBar(){nightUI(0);$('stick').style.display='none';$('btn').style.display='none';$('air').style.display='none';$('msg').textContent=''}
 function buy(k){
-  if(k==='l'&&lung<5&&coins>=10+10*lung){coins-=10+10*lung;lung++}
-  if(k==='f'&&fins<5&&coins>=10+10*fins){coins-=10+10*fins;fins++}
-  if(k==='h'&&hl<4&&coins>=15+15*hl&&inv[4]>=1+hl){coins-=15+15*hl;inv[4]-=1+hl;hl++}
-  if(k==='b'&&coins>=8){coins-=8;inv[7]++}
-  if(k==='g'&&inv[3]>=1){inv[3]--;inv[6]+=2}
-  if(k==='r'&&inv[5]>0){coins+=inv[5]*40;inv[5]=0}
+  if(k==='l'&&lung<5&&coins>=15+15*lung){coins-=15+15*lung;lung++}
+  if(k==='f'&&fins<5&&coins>=15+15*fins){coins-=15+15*fins;fins++}
+  if(k==='h'&&hl<4&&coins>=25+20*hl&&inv[6]>=1+hl){coins-=25+20*hl;inv[6]-=1+hl;hl++}
+  if(k==='b'&&coins>=12){coins-=12;inv[9]++}
+  if(k==='g'&&inv[5]>=1){inv[5]--;inv[8]+=2}
+  if(k==='r'&&inv[7]>0){coins+=inv[7]*40;inv[7]=0}
+  if(k==='u'&&inv[5]>=1&&inv[6]>=1){inv[5]--;inv[6]--;lures++}
+  if(k==='s'&&coins>=40&&stall<3){coins-=40;stall++}
+  if(k==='tb'&&tokens>=1){tokens--;shrine.boat++}
+  if(k==='ta'&&tokens>=1){tokens--;shrine.bait++}
+  if(k==='tm'&&tokens>=1){tokens--;shrine.market++}
+  if(k==='tc'&&tokens>=1){tokens--;shrine.crew++}
   dusk();
 }
 function die(){
-  phase='dead';hideBar();coins=0;day=1;inv=[0,0,0,0,0,0,1,1];lung=0;fins=0;hl=0;persist();
+  phase='dead';hideBar();coins=0;day=1;inv=[0,0,0,0,0,0,0,0,1,1];lung=0;fins=0;hl=0;bossFight=null;persist();
   const p=$('panel');p.style.paddingRight='';p.style.display='flex';p.style.background='rgba(8,12,30,.9)';p.style.justifyContent='center';
-  p.innerHTML=`<h2>You collapsed in the abyss</h2><p>The sea keeps everything.<br>Coins, items and upgrades are lost.</p>
+  p.innerHTML=`<h2>You collapsed in the abyss</h2><p>The sea keeps everything — except your tokens.<br>Coins, items and upgrades are lost. Tokens kept: ${tokens} · Zone: ${ZONES[zone]} · Stall Lv${stall}</p>
   <button class="wood" onclick="sail()">Dive again</button><button class="wood" onclick="showTitle()">Menu</button>`;
 }
 
@@ -396,7 +484,7 @@ cv.addEventListener('pointerdown',e=>{
   ptr=pos(e);cv.setPointerCapture(e.pointerId);
   if(phase==='day')for(const c of custs){
     if(!c.leaving&&Math.abs(ptr.x-140-c.x*2)<26&&ptr.y+100>330&&ptr.y+100<500){
-      if(inv[c.want]>0){inv[c.want]--;coins+=T[c.want].p;c.leaving=1;c.happy=1;floats.push({x:c.x,y:340,txt:'+'+T[c.want].p,c:'#ffe27a',t:0})}
+      if(inv[c.want]>0){inv[c.want]--;const pay=Math.round(T[c.want].p*(1+stall*.15+shrine.market*.15)*(c.special?2:1));coins+=pay;c.leaving=1;c.happy=1;floats.push({x:c.x,y:340,txt:'+'+pay+(c.special?' SPECIAL!':''),c:'#ffd94a',t:0})}
       else{c.shake=20;floats.push({x:c.x,y:340,txt:'none!',c:'#ff9a9a',t:0})}
     }
   }
@@ -422,6 +510,8 @@ window.addEventListener('keydown',e=>{
   if((k==='-'||k==='_'||k==='x')&&phase==='night'){setZoom(zoom-.15);return}
   if(k===' '){useItem()}
   else if(k==='e'){toggleBoat()}
+  else if(k==='l'&&phase==='night'&&!bossFight&&zone<4){startBossFight('lure')}
+  else if(k==='f'&&phase==='night'&&altar&&!bossFight&&zone<4&&Math.hypot(px-altar.x,py-altar.y)<120){startBossFight('altar')}
   else if(k==='b'&&phase==='night'){toggleBag()}
   else if(k==='1'||k==='2'||k==='3'){sel=+k-1;lastHK='';renderHot()}
   else if(k==='escape'){persist();showTitle()}
@@ -447,7 +537,7 @@ function update(){
       if(py>=SEA-50&&px>48&&px<152)px=px<100?48:152;
       px=Math.max(32,Math.min(400,px));bx=480;
     }else if(mode==='boat'){
-      bvx+=(jv.x*3.4-bvx)*.07;bx+=bvx;vx=bvx;vy=0;if(Math.abs(bvx)>1&&Math.random()<.3)parts.push({x:bx-Math.sign(bvx)*36,y:SEA+4,vx:-bvx*.4,vy:-.2,l:.6,k:'foam'});
+      bvx+=(jv.x*3.4*(1+shrine.boat*.15)-bvx)*.07;bx+=bvx;vx=bvx;vy=0;if(Math.abs(bvx)>1&&Math.random()<.3)parts.push({x:bx-Math.sign(bvx)*36,y:SEA+4,vx:-bvx*.4,vy:-.2,l:.6,k:'foam'});
       if(bx<480){bx=480;if(bvx<0)bvx=0}bx=Math.max(480,Math.min(WW-40,bx));px=bx;py=SEA-12;
     }else{
       {const a=.52*spd(),mx=5.2*spd();
@@ -457,6 +547,11 @@ function update(){
        const nx=px+vx,ny=py+vy;if(!blocked(nx,py))px=nx;else vx*=-.6;if(!blocked(px,ny))py=ny;else vy*=-.6;
        bvx*=.96;bx=Math.max(480,Math.min(WW-40,bx+bvx))}
       px=Math.max(16,Math.min(WW-16,px));py=Math.max(SEA-80,Math.min(FLOOR-16,py));
+      {const maxD=SEA+(FLOOR-SEA)*ZONE_DEPTH[zone];
+       if(py>maxD){py=maxD;if(vy>0)vy=0;lockFloatT-=1/60;if(lockFloatT<=0){lockFloatT=5;floats.push({x:px,y:py-28,txt:'Locked: '+ZONES[zone+1]+' — beat '+BOSSNAMES[zone]+'!',c:'#ff8a8a',t:0})}}
+       const df2=(py-SEA)/(FLOOR-SEA);
+       if(df2>.6){luck=Math.min(100,luck+.02);if(quest&&!quest.done&&quest.kind==='deep'){quest.have=1;checkQuest()}}
+       if(breath<maxB()*.25)luck=Math.min(100,luck+.03);}
     }
     const near=Math.abs(px-bx)<44&&py<SEA+28;
     const nearDock=mode==='swim'&&px<440&&py<SEA+28;
@@ -474,8 +569,17 @@ function update(){
     fish.forEach(fishAI);
     fish=fish.filter(f=>f.x>-40&&f.x<WW+40);while(fish.length<fishN())spawn(false);
     for(const f of fish)if(Math.abs(f.x+f.ty.w/2-px)<f.ty.w/2+10&&Math.abs(f.y+4-py)<16){
-      inv[T.indexOf(f.ty)]++;if(order&&!order.done&&T.indexOf(f.ty)===order.type){order.have++;if(order.have>=order.need){order.done=true;coins+=20;floats.push({x:px,y:py-28,txt:'Order done! +20 coins',c:'#ffe27a',t:0})}}for(let i=0;i<8;i++)parts.push({x:f.x+8,y:f.y+4,vx:(Math.random()-.5)*4,vy:-Math.random()*3.2,l:.7,k:'spark',c:f.ty.c});floats.push({x:f.x,y:f.y-8,txt:'+'+f.ty.n,c:f.ty.c,t:0});fish=fish.filter(o=>o!==f);break}
-    updateMobs();updateParts();for(const ch of chests)if(!ch.open&&Math.abs(ch.x-px)<20&&Math.abs(ch.y-8-py)<20){ch.open=true;coins+=ch.v;if(Math.random()<.35){inv[5]++;floats.push({x:ch.x,y:ch.y-44,txt:'+Relic!',c:'#7fffd4',t:0})}for(let i=0;i<12;i++)parts.push({x:ch.x,y:ch.y-12,vx:(Math.random()-.5)*4.8,vy:-Math.random()*4,l:.9,k:'spark'});floats.push({x:ch.x,y:ch.y-24,txt:'+'+ch.v+' coins',c:'#ffe27a',t:0})}
+      {const ti=T.indexOf(f.ty);inv[ti]++;if(ti>=3)luck=Math.min(100,luck+1);
+       if(quest&&!quest.done&&((quest.kind==='lantern'&&ti===2)||(quest.kind==='ghost'&&ti===3)||(quest.kind==='abyss'&&ti===4)||quest.kind==='catch')){quest.have++;checkQuest()}
+       if(order&&!order.done&&ti===order.type){order.have++;if(order.have>=order.need){order.done=true;const rw=order.need*(T[order.type].p+2);coins+=rw;floats.push({x:px,y:py-28,txt:'Order done! +'+rw+' coins',c:'#ffe27a',t:0})}}
+       for(let i=0;i<8;i++)parts.push({x:f.x+8,y:f.y+4,vx:(Math.random()-.5)*4,vy:-Math.random()*3.2,l:.7,k:'spark',c:f.ty.c});floats.push({x:f.x,y:f.y-8,txt:'+'+f.ty.n+' · '+f.ty.rar,c:f.ty.c,t:0});fish=fish.filter(o=>o!==f);break}}
+    updateMobs();if(bossFight)updateBoss();updateParts();for(const ch of chests)if(!ch.open&&Math.abs(ch.x-px)<20&&Math.abs(ch.y-8-py)<20){ch.open=true;
+      const roll=Math.random()*100+luck*.3;let loot='';
+      if(roll>92){inv[7]++;tokens++;loot='+LEGENDARY Relic! +1 token';luck=Math.max(0,luck-10)}
+      else if(roll>70){const r=Math.random();if(r<.4){inv[6]+=2;loot='+2 fangs (rare)'}else if(r<.7){inv[8]+=3;loot='+3 flares (rare)'}else{inv[9]+=2;loot='+2 air bottles (rare)'}}
+      else if(roll>45){inv[5]+=2;loot='+2 gel'}
+      else{coins+=ch.v;loot='+'+ch.v+' coins'}
+      for(let i=0;i<12;i++)parts.push({x:ch.x,y:ch.y-12,vx:(Math.random()-.5)*4.8,vy:-Math.random()*4,l:.9,k:'spark'});floats.push({x:ch.x,y:ch.y-24,txt:loot,c:'#ffd94a',t:0})}
     {const vw=viewW(),vh=viewH(),tx=Math.max(0,Math.min(Math.max(0,WW-vw),px-vw/2+vx*28)),ty=Math.max(0,Math.min(Math.max(0,FLOOR+40-vh),py-vh*.45+vy*16));if(snap){cx=tx;cy=ty;snap=0}else{cx+=(tx-cx)*.1;cy+=(ty-cy)*.1}}
   }
   if(phase==='day'){
@@ -484,9 +588,10 @@ function update(){
     const act=custs.filter(c=>!c.leaving);
     if(spawnT<=0&&act.length<3){
       const used=act.map(c=>c.slot),slot=[0,1,2].find(s=>!used.includes(s));
-      const have=[0,1,2].filter(i=>inv[i]>0),want=(have.length&&Math.random()<.8)?have[Math.random()*have.length|0]:Math.random()*3|0;
-      custs.push({slot,sx:35+slot*55,x:-80,want,pat:14*pat,mp:14*pat,col:['#e58fa8','#8fc4e5','#a8e58f','#e5c88f'][Math.random()*4|0],ph:Math.random()*6});
-      spawnT=2.5+Math.random()*2;
+      const have=[0,1,2,3,4].filter(i=>inv[i]>0),want=(have.length&&Math.random()<.8)?have[Math.random()*have.length|0]:Math.floor(Math.random()*5);
+      const special=want>=3&&Math.random()<.5;
+      custs.push({slot,sx:35+slot*55,x:-80,want,special,pat:14*pat*(1+shrine.crew*.25),mp:14*pat*(1+shrine.crew*.25),col:special?'#ffd94a':['#e58fa8','#8fc4e5','#a8e58f','#e5c88f'][Math.random()*4|0],ph:Math.random()*6});
+      spawnT=Math.max(1,2.5-stall*.4)+Math.random()*2;
     }
     for(const c of custs){
       c.ph+=.1;if(c.shake>0)c.shake--;
@@ -498,9 +603,9 @@ function update(){
 }
 function updHud(){
   let s=`${esc(cur?cur.name:'')}<br>Day ${day} · Coins ${coins}<br>${phase==='night'?'<span style="color:#ff6b7a">'+'♥'.repeat(Math.max(0,hp))+'<span style="opacity:.3">'+'♥'.repeat(Math.max(0,3-hp))+'</span></span><br>':''}`+T.map((f,i)=>`<span style="color:${f.c}">${f.n.split(' ')[0]} ${inv[i]}</span>`).join(' ');
-  s+=phase==='night'?`<br>${nightT>0?'Dawn in '+Math.ceil(nightT)+'s':'DAWN! Swim up!'}`+ (order?`<br>Order: ${T[order.type].n} ${order.have}/${order.need}${order.done?' ✓':''}`:''):`<br>Market open ${Math.ceil(dayT)}s`;
+  s+=phase==='night'?`<br>${nightT>0?'Dawn in '+Math.ceil(nightT)+'s':'DAWN! Swim up!'}`+`<br>${ZONES[zone]} · Luck ${Math.round(luck)} · Tokens ${tokens}`+(order?`<br>Order: ${T[order.type].n} ${order.have}/${order.need}${order.done?' ✓':''}`:'')+(quest?`<br>Quest: ${quest.txt} ${quest.have}/${quest.need}${quest.done?' ✓':''}`:'')+(bossFight?`<br>BOSS ${bossFight.name} ${bossFight.hp}/${bossFight.max} HP`:''):`<br>Market open ${Math.ceil(dayT)}s · Stall Lv${stall}`;
   $('hud').innerHTML=s;
-  if(phase==='night'){const hk=sel+','+inv[6]+','+inv[7];if(hk!==lastHK){lastHK=hk;renderHot()}$('cf').style.width=Math.min(100,curse)+'%';const p=Math.max(0,breath/maxB());$('bf').style.width=p*100+'%';$('bf').style.background=p<.25?'#ff6b6b':'#5ad1ff'}
+  if(phase==='night'){const hk=sel+','+inv[8]+','+inv[9];if(hk!==lastHK){lastHK=hk;renderHot()}$('cf').style.width=Math.min(100,curse)+'%';const p=Math.max(0,breath/maxB());$('bf').style.width=p*100+'%';$('bf').style.background=p<.25?'#ff6b6b':'#5ad1ff'}
 }
 
 /* ---------- drawing: detailed Terraria-style sprites, 640x360 ---------- */
@@ -641,7 +746,12 @@ function drawNight(){
   for(const c of corals){R(c.x,c.y-12,6,12,c.c);if(c.k>0)R(c.x-6,c.y-18,6,6,c.c);if(c.k>1)R(c.x+6,c.y-22,6,10,c.c);R(c.x,c.y-14,6,2,'#ffffff44')}
   for(const k of kelp)for(let i=0;i<k.h;i+=6){const sx=k.x+Math.sin(t+k.ph+i*.05)*4;R(sx,k.y-i,4,6,'#2f6b55');if(i%18===0)R(sx+(i%36?4:-6),k.y-i,6,4,'#3d8a6c')}
   for(const e of eyes)if(Math.sin(t*.8+e.ph)>-.4){R(e.x,e.y,6,4,'#ff5a5a');R(e.x+12,e.y,6,4,'#ff5a5a');R(e.x,e.y,2,2,'#fff')}
-  fish.forEach(f=>fishSprite(f.x,f.y+Math.sin(f.ph),f.ty,f.dir||1,f.ph));drawFlares();drawMobs();drawParts();
+  fish.forEach(f=>fishSprite(f.x,f.y+Math.sin(f.ph),f.ty,f.dir||1,f.ph));drawFlares();drawMobs();if(bossFight)drawBoss();drawParts();
+  if(altar){const ax=Math.round(altar.x),ay=Math.round(altar.y);
+    R(ax-60,ay-90,12,90,'#3a2a22');R(ax+48,ay-90,12,90,'#3a2a22');R(ax-70,ay-100,140,10,'#4a3830');
+    R(ax-20,ay-40,40,40,'#5a5a78');R(ax-14,ay-34,28,6,'#7fffd4');
+    const ag=g.createRadialGradient(ax,ay-30,2,ax,ay-30,60);ag.addColorStop(0,'rgba(127,255,212,.4)');ag.addColorStop(1,'rgba(127,255,212,0)');g.fillStyle=ag;g.fillRect(ax-60,ay-90,120,120);
+    g.font='12px "Courier New"';g.textAlign='center';g.fillStyle='#7fffd4';g.fillText(zone<4?'BOSS ALTAR — press F':'ALTAR',ax,ay-110);}
   for(const b of bubbles){const bx=b.x+Math.sin(b.y)*3;R(bx,b.y,6,6,'rgba(190,230,255,.6)');R(bx+2,b.y+2,2,2,'#fff')}
   const sur=mode==='boat'&&py<=SEA+8,x=Math.round(px),y=Math.round(py+(sur?Math.sin(t*2)*2.4:0));
   R(0,SEA-16,440,20,'#4a3022');R(0,SEA-16,440,6,'#6b4a34');
@@ -713,7 +823,7 @@ function drawDay(){
   g.font='16px "Courier New"';g.textAlign='center';g.fillStyle='#ffe9c4';g.fillText('FISH MARKET',180,228);
   for(const lx of[52,308]){R(lx,200,2,12,'#4a3022');R(lx-6,212,14,16,'#ffd98a');R(lx-4,214,10,12,'#fff6d0');R(lx-6,210,14,2,'#4a3022')}
   R(12,300,336,44,'#8a5a3a');R(12,300,336,6,'#a8704a');for(let x=20;x<344;x+=40)R(x,316,2,24,'#6e4528');
-  for(let i=0;i<3;i++){const x=48+i*110;R(x-28,256,56,36,'#b98b5e');R(x-28,256,56,4,'#d2a272');R(x-24,260,48,28,'#2f4a6a');R(x-28,272,56,2,'#8a6244');
+  for(let i=0;i<5;i++){const x=34+i*66;R(x-28,256,56,36,'#b98b5e');R(x-28,256,56,4,'#d2a272');R(x-24,260,48,28,'#2f4a6a');R(x-28,272,56,2,'#8a6244');
     for(let k=0;k<Math.min(inv[i],4);k++)fishSprite(x-16+(k%2)*16,264+(k>>1)*12,{...T[i],glow:0,w:12},1);
     g.fillStyle='#fff6e6';g.fillText('x'+inv[i]+'  '+T[i].p+'c',x,332)}
   R(300,280,24,32,'#7a5236');R(300,286,24,4,'#4a3022');R(300,302,24,4,'#4a3022');
