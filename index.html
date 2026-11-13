@@ -580,7 +580,7 @@ function update(){
       else if(roll>45){inv[5]+=2;loot='+2 gel'}
       else{coins+=ch.v;loot='+'+ch.v+' coins'}
       for(let i=0;i<12;i++)parts.push({x:ch.x,y:ch.y-12,vx:(Math.random()-.5)*4.8,vy:-Math.random()*4,l:.9,k:'spark'});floats.push({x:ch.x,y:ch.y-24,txt:loot,c:'#ffd94a',t:0})}
-    {const vw=viewW(),vh=viewH(),tx=Math.max(0,Math.min(Math.max(0,WW-vw),px-vw/2+vx*28)),ty=Math.max(0,Math.min(Math.max(0,FLOOR+40-vh),py-vh*.58+vy*16));if(snap){cx=tx;cy=ty;snap=0}else{cx+=(tx-cx)*.1;cy+=(ty-cy)*.1}}
+    {const vw=viewW(),vh=viewH(),tx=px-vw/2+vx*12,ty=py-vh/2+vy*8;if(snap){cx=tx;cy=ty;snap=0}else{cx+=(tx-cx)*.12;cy+=(ty-cy)*.12}}
   }
   if(phase==='day'){
     dayT-=1/60;if(dayT<=0){toDusk();return}
