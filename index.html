@@ -332,7 +332,7 @@ function showSettings(){
   <div class="box"><p>Controls</p><div class="row">
   <button class="wood sm opt${ctrlMode==='mobile'?' on':''}" onclick="setCtrl('mobile');showSettings()">Mobile</button>
   <button class="wood sm opt${ctrlMode==='desktop'?' on':''}" onclick="setCtrl('desktop');showSettings()">Desktop</button>
-  </div><p class="keys">Mobile: on-screen joystick + Use button.<br>Desktop: WASD / Arrow keys to move · Space to Use · E to Jump out / Board boat · 1-3 to pick Harpoon / Flare / Air bottle · B for Bag · Esc for Menu.<br><br>Desktop mode hides the on-screen joystick. The Use button still works with a mouse click.</p></div>
+  </div><p class="keys">Mobile: on-screen joystick + Use button.<br>Desktop: WASD / Arrow keys to move · Hold W to swim up · Space to Use · E to Jump out / Board boat · 1-3 to pick Harpoon / Flare / Air bottle · B for Bag · Esc for Menu.<br><br>Desktop mode hides the on-screen joystick. The Use button still works with a mouse click.</p></div>
   <div class="row" style="margin-top:auto"><button class="wood" onclick="showTitle()">Back</button></div>`;
 }
 function showCreate(fresh){
@@ -368,7 +368,7 @@ function sail(){
   phase='night';fish=[];floats=[];bubbles=[];for(let i=0;i<fishN();i++)spawn(true);
   bx=WW/2;mode='boat';px=bx;py=SEA-6;breath=maxB();nightT=70;chests.forEach(c=>c.open=false);snap=1;mobs=[];parts=[];vx=vy=0;bvx=0;hurt=0;shake=0;wasUnder=false;hp=3;curse=0;atk=null;cd=0;flares=[];for(let i=0;i<mobN();i++)spawnMob();$('panel').style.display='none';
   applyCtrlUI();jv={x:0,y:0};nightUI(1);$('btn').style.display='block';$('btn').onclick=toggleBoat;$('btn').disabled=false;$('home').style.display='block';$('air').style.display='block';
-  $('msg').textContent=ctrlMode==='desktop'?'WASD / arrows to move. Space to Use. E to Jump out / Board boat.':'Drag to sail. Jump out to dive. Explore caves for loot!';
+  $('msg').textContent=ctrlMode==='desktop'?'Hold W to swim up. WASD / arrows to move. Space to Use. E to Jump out / Board boat.':'Drag to sail. Jump out to dive. Explore caves for loot!';
 }
 function startDay(){
   phase='day';dayT=30;custs=[];floats=[];spawnT=1;$('air').style.display='none';$('stick').style.display='none';nightUI(0);persist();
@@ -430,6 +430,7 @@ window.addEventListener('keydown',e=>{
   if(phase!=='night'&&phase!=='day')return;
   keys[k]=true;
   if(e.repeat)return;
+  if((k==='w'||k==='arrowup')&&phase==='night'&&mode==='swim'){vy=Math.max(vy-1.1,-2.1*spd())}
   if(k===' '){useItem()}
   else if(k==='e'){toggleBoat()}
   else if(k==='b'&&phase==='night'){toggleBag()}
@@ -451,10 +452,10 @@ function update(){
       bvx+=(jv.x*1.7-bvx)*.07;bx+=bvx;vx=bvx;vy=0;if(Math.abs(bvx)>.5&&Math.random()<.3)parts.push({x:bx-Math.sign(bvx)*18,y:SEA+2,vx:-bvx*.2,vy:-.1,l:.6,k:'foam'});
       bx=Math.max(20,Math.min(WW-20,bx));px=bx;py=SEA-6;
     }else{
-      {const air=py<SEA-2,a=.13*spd(),mx=1.6*spd();
-       if(!air){vx+=jv.x*a;vy+=jv.y*a+.03;vx*=.9;vy*=.9;const sp=Math.hypot(vx,vy);if(sp>mx){vx*=mx/sp;vy*=mx/sp}}else{vy+=.1;vx*=.99}
+      {const a=.2*spd(),mx=2.1*spd();
+       vx+=jv.x*a;vy+=jv.y*a+.01;vx*=.9;vy*=.9;const sp=Math.hypot(vx,vy);if(sp>mx){vx*=mx/sp;vy*=mx/sp}if(py<SEA-6&&vy<0)vy=0
        if(Math.abs(vx)>.1)face=Math.sign(vx);
-       if(!air&&py>SEA+4&&Math.hypot(vx,vy)>.6&&Math.random()<.3)parts.push({x:px-vx*4,y:py,vx:0,vy:-.2,l:.8,k:'bub'});
+       if(py>SEA+4&&Math.hypot(vx,vy)>.6&&Math.random()<.3)parts.push({x:px-vx*4,y:py,vx:0,vy:-.2,l:.8,k:'bub'});
        const nx=px+vx,ny=py+vy;if(!blocked(nx,py))px=nx;else vx*=-.3;if(!blocked(px,ny))py=ny;else vy*=-.3;
        bvx*=.96;bx=Math.max(20,Math.min(WW-20,bx+bvx))}
       px=Math.max(8,Math.min(WW-8,px));py=Math.max(SEA-40,Math.min(FLOOR-8,py));
@@ -462,7 +463,7 @@ function update(){
     const near=Math.abs(px-bx)<22&&py<SEA+14;
     $('btn').textContent=mode==='boat'?'Jump out':(near?'Board boat':'Boat too far');$('btn').disabled=mode==='swim'&&!near;
     const under=py>SEA+4;if(mode==='swim'&&under!==wasUnder)splash(px,SEA,Math.abs(vy)*3+2);wasUnder=under;
-    if(mode==='swim'&&under){const df=(py-SEA)/(FLOOR-SEA);if(vy<-.3&&df>.25)curse+=(-vy-.3)*df*.4;else curse=Math.max(0,curse-.06);
+    if(mode==='swim'&&under){const df=(py-SEA)/(FLOOR-SEA);if(vy<-.3&&df>.35)curse+=(-vy-.3)*df*.2;else curse=Math.max(0,curse-.06);
       if(curse>=100){curse=40;hp--;hurt=1.2;shake=14;floats.push({x:px,y:py-12,txt:'Curse! -1 HP',c:'#d58cff',t:0})}}
     else curse=Math.max(0,curse-.5);
     if(nightT>0)nightT-=1/60;
