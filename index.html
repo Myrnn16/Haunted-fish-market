@@ -334,7 +334,7 @@ function showCreate(fresh){
   </div><div><div class="box"><p>Your fisher</p><canvas id="pv" width="60" height="68" style="width:120px;height:136px;image-rendering:pixelated"></canvas>
   <p>Skin</p><div class="row">${sw('skin',SKIN)}</div><p>Hat</p><div class="row">${sw('hair',HAIR)}</div><p>Outfit</p><div class="row">${sw('suit',SUIT)}</div></div></div></div>
   <div class="row" style="margin-top:auto"><button class="wood" onclick="showTitle()">Back</button><button class="wood" onclick="make()">Create and play</button></div>`;
-  const pg=$('pv').getContext('2d'),old=g;g=pg;R(0,0,60,68,'#1b2250');R(0,48,60,20,'#17294f');drawDiver(30,36,{skin:cr.skin,hair:cr.hair,suit:cr.suit},0,1);g=old;
+  const pg=$('pv').getContext('2d'),old=g;g=pg;R(0,0,60,68,'#1b2250');R(0,48,60,20,'#17294f');pg.save();pg.scale(.8,.8);drawDiver(38,50,{skin:cr.skin,hair:cr.hair,suit:cr.suit},0,1);pg.restore();g=old;
 }
 function setOpt(k,v){cr[k]=v;showCreate()}
 function make(){
@@ -522,31 +522,52 @@ function fishSprite(x,y,ty,d,ph){
   R(x+4,y-4,Math.max(4,w-10),2,ty.d);R(x+w*.4,y,2,6,ty.d);
   for(let i=0;i<3;i++)R(x+4+i*5,y+2,2,2,'rgba(0,0,0,.18)');
   const wg=ph?Math.round(Math.sin(ph*3)*3):0,tx=d>0?x-8:x+w;R(tx,y+wg,8,2,ty.d);R(tx+(d>0?2:0),y+2+wg,6,6,ty.c);R(tx,y+8+wg,8,2,ty.d);
-  const ex=d>0?x+w-6:x+2;R(ex,y+2,4,4,'#0b1020');R(ex+(d>0?2:0),y+2,2,2,'#fff');
+  const ex=d>0?x+w-6:x+2;R(ex,y+2,4,4,'#fff');R(ex+(d>0?2:0),y+2,2,2,'#0b1020');
   if(ty.glow){R(ex-2,y-4,2,2,ty.c);R(ex+4,y-4,2,2,ty.c)}
 }
 function drawFloats(){g.font='16px "Courier New"';g.textAlign='center';for(const f of floats){g.globalAlpha=1-f.t/1.2;g.fillStyle='#000';g.fillText(f.txt,f.x+2,f.y-f.t*28+2);g.fillStyle=f.c;g.fillText(f.txt,f.x,f.y-f.t*28)}g.globalAlpha=1}
 function drawDiver(x,y,a,kick,sur,ln){
-  const sk=SKIN[a.skin],ht=HAIR[a.hair],su=SUIT[a.suit];
+  const sk=SKIN[a.skin],ht=HAIR[a.hair],su=SUIT[a.suit],skD='rgba(0,0,0,.28)';
   x+=ln||0;
-  // Side profile, facing right: back leg / front leg in stride, never front-facing
-  if(!sur){R(x-10,y+14,6,16+kick*2,sk);R(x+0,y+14,6,16-kick*2,sk);R(x-12,y+30+kick*2,8,4,'#1c1a22');R(x+0,y+30-kick*2,8,4,'#1c1a22')}
-  else{R(x-10,y+14,6,12,sk);R(x+0,y+14,6,12,sk)}
-  // Torso, dark red shirt, belt, shading on the back side
-  R(x-10,y-10,18,24,su);R(x-10,y-10,18,2,'#ffffff22');R(x-10,y+12,18,2,'#00000055');R(x-10,y-10,3,24,'#00000033');
-  R(x-10,y+2,18,4,'#2f1d12');R(x-2,y+2,4,4,'#c89a50');
-  // Back arm (short, behind torso), front arm reaching forward with the torch
-  R(x-12,y-8,5,16+kick,sk);
-  R(x+4,y-6,12,5,sk);R(x+14,y-8,5,5,sk);
-  // Torch in the forward hand: handle + flame
-  R(x+16,y-14,3,10,'#6b4a34');const fl=Math.sin(t*9)*2;R(x+15,y-18+fl,5,5,'#ff8a3a');R(x+16,y-17+fl,3,3,'#ffd98a');
-  // Head in profile: nose to the right, ONE white eye on the facing side, black spiky hair swept back
-  R(x-8,y-30,18,20,sk);R(x+8,y-24,4,4,sk);R(x-8,y-12,18,2,'#0003');
-  R(x-10,y-34,22,6,ht);R(x-8,y-36,18,2,ht);R(x-12,y-30,4,10,ht);R(x-14,y-28,6,4,ht);R(x-6,y-38,14,4,ht);R(x+2,y-40,8,3,ht);
-  R(x+2,y-24,6,6,'#fff');R(x+4,y-22,2,2,'#1a1a1a');
-  R(x+4,y-16,4,2,'#5a3a3a');R(x+0,y-14,4,2,'#3a2222');
-  // Harpoon held low in the back hand
-  R(x-14,y-2,4,4,'#a8742a');R(x-13,y-1,2,2,'#ffe9a0');
+  const k=kick||0;
+  if(!sur){
+    // Legs in walking stride, in profile: BACK leg trails behind, FRONT leg reaches forward.
+    // Never two legs side-by-side facing the viewer.
+    // Back leg (shaded, behind): thigh back-down, shin back, boot pointing back.
+    R(x-12-k*4,y+12,6,10,skD);R(x-14-k*4,y+22,6,8,skD);R(x-18-k*4,y+30,10,4,'#1c1a22');
+    // Front leg (lit): thigh forward-down, shin forward, boot pointing forward.
+    R(x+2+k*4,y+12,6,10,sk);R(x+6+k*4,y+22,6,8,sk);R(x+6+k*4,y+30,12,4,'#1c1a22');
+  }else{
+    // Sitting in the boat: legs bent forward, one in front of the other.
+    R(x-8,y+14,6,10,skD);R(x-2,y+14,6,10,sk);R(x-8,y+24,8,4,'#1c1a22');R(x+2,y+24,10,4,'#1c1a22');
+  }
+  // Torso in profile: narrow (12 wide), chest forward (right, lit), back (left, shaded).
+  R(x-6,y-10,12,24,su);R(x+4,y-10,2,24,'rgba(255,255,255,.22)');R(x-6,y-10,2,24,'rgba(0,0,0,.35)');
+  R(x-6,y+12,12,2,'#00000055');
+  // Belt on the side, buckle at the FRONT (right), never centred on a wide chest.
+  R(x-6,y+2,12,4,'#2f1d12');R(x+2,y+2,4,4,'#c89a50');
+  // Collar at the front of the neck.
+  R(x+0,y-10,6,3,'rgba(255,255,255,.18)');
+  // Back arm: mostly hidden behind the torso, hand low at the back holding the harpoon.
+  R(x-10,y-4,5,10,skD);R(x-11,y+4,5,5,sk);
+  // Front arm reaching forward to the torch.
+  R(x+2,y-8,10,5,sk);R(x+10,y-6,8,5,sk);R(x+16,y-6,5,5,sk);
+  // Torch in the forward hand, flame flickering above.
+  R(x+18,y-14,3,10,'#6b4a34');const fl=Math.sin(t*9)*2;R(x+17,y-20+fl,5,6,'#ff8a3a');R(x+18,y-19+fl,3,4,'#ffd98a');
+  // Harpoon held across the body in the back hand, trident tip pointing forward.
+  R(x-18,y+6,42,3,'#a8742a');R(x-18,y+6,3,3,'#5a3b26');R(x+6,y+6,3,3,'#5a3b26');
+  R(x+24,y+2,2,10,'#c9c9c9');R(x+28,y+4,2,8,'#c9c9c9');R(x+26,y+6,4,3,'#8a8a8a');
+  // Head in profile: narrow skull, nose pointing forward (right), chin at the front.
+  R(x-6,y-30,14,18,sk);R(x+8,y-24,4,4,sk);R(x-6,y-12,14,2,'#0003');
+  R(x-2,y-12,6,4,'rgba(0,0,0,.25)');
+  // ONE white eye with a dark pupil, on the facing side only. Eyebrow above it.
+  R(x+1,y-26,6,6,'#fff');R(x+4,y-24,2,2,'#1a1a1a');R(x+0,y-28,8,2,'#1a1a1a');
+  // Small mouth at the front.
+  R(x+5,y-16,4,2,'#5a3a3a');
+  // SPIKY black hair: distinct spikes sticking UP and sweeping BACK, never a flat cap.
+  R(x-8,y-34,16,6,ht);
+  R(x+4,y-40,4,6,ht);R(x-2,y-44,4,10,ht);R(x-8,y-42,4,8,ht);
+  R(x-14,y-38,6,8,ht);R(x-16,y-32,6,6,ht);R(x+6,y-36,4,6,ht);
 }
 function drawMobs(){
   for(const m of mobs){const x=Math.round(m.x),y=Math.round(m.y);if(m.flash>0)R(x-18,y-18,36,36,'rgba(255,255,255,.35)');
@@ -614,6 +635,7 @@ function drawNight(){
   for(const r of rays)for(let y=0;y<240;y+=12)R(r.x+y*.35+Math.sin(t+r.x)*3,SEA+y,r.w,12,`rgba(170,205,255,${.07-y*.0005})`);
   for(let x=0;x<WW;x+=8){R(x,SEA+Math.round(Math.sin(x*.1+t*2)*2),8,2,'#7aa8e0');R(x+4,SEA+4+Math.round(Math.sin(x*.1+t*2)*2),4,2,'#2a4a7a')}
   for(let i=0;i<3;i++){const fx=(t*16+i*240)%WW;R(fx,SEA+28+i*16,16,4,'rgba(120,160,220,.25)');R(fx+4,SEA+30+i*16,8,2,'rgba(120,160,220,.2)')}
+  for(let i=0;i<8;i++){const rx2=WW-140+18+Math.round(Math.sin(t*2+i)*6);R(rx2,SEA+2+i*8,26-i*2,3,'rgba(241,236,208,.18)')}
   drawTerrain();drawStructs();
   R(0,FLOOR,WW,60,'#1a1730');for(let x=0;x<WW;x+=28){R(x,FLOOR-6-((x*7)%10),20,10,'#241f40');R(x+4,FLOOR-6-((x*7)%10),8,2,'#33305a')}
   for(const c of corals){R(c.x,c.y-12,6,12,c.c);if(c.k>0)R(c.x-6,c.y-18,6,6,c.c);if(c.k>1)R(c.x+6,c.y-22,6,10,c.c);R(c.x,c.y-14,6,2,'#ffffff44')}
@@ -666,12 +688,16 @@ function drawTitle2(){
 }
 function chibi(x,y,col,sad){
   x=Math.round(x);y=Math.round(y);
-  R(x-8,y+10,6,12,'#4a3022');R(x+2,y+10,6,12,'#4a3022');
-  R(x-10,y-14,20,24,col);R(x-10,y-14,20,2,'#ffffff33');R(x-10,y+8,20,2,'#0003');
-  R(x-16,y-12,6,18,'#f6d6b5');R(x+10,y-12,6,18,'#f6d6b5');
-  R(x-10,y-34,20,20,'#f6d6b5');R(x-12,y-38,24,8,'#6b4a34');R(x-12,y-32,4,10,'#6b4a34');R(x+8,y-32,4,10,'#6b4a34');
-  R(x-8,y-26,6,6,'#1a1420');R(x+2,y-26,6,6,'#1a1420');R(x-6,y-24,2,2,'#fff');R(x+4,y-24,2,2,'#fff');
-  R(x-8,y-20,4,2,'#ff9aa8');R(x+4,y-20,4,2,'#ff9aa8');R(x-2,y-18,4,2,sad?'#8a4a4a':'#c46a6a');
+  // Profile customer: legs in stride, narrow torso, ONE eye.
+  R(x-8,y+10,5,12,'#4a3022');R(x+2,y+10,5,12,'#4a3022');
+  R(x-8,y+22,8,4,'#2f1d12');R(x+2,y+22,9,4,'#2f1d12');
+  R(x-6,y-14,12,24,col);R(x+4,y-14,2,24,'#ffffff33');R(x-6,y-14,2,24,'#0003');
+  R(x-6,y-2,12,4,'#2f1d12');R(x+2,y-2,4,4,'#c89a50');
+  R(x+4,y-12,6,5,'#f6d6b5');
+  R(x-6,y-34,14,20,'#f6d6b5');R(x+8,y-28,3,4,'#f6d6b5');
+  R(x-8,y-38,16,6,'#6b4a34');R(x-4,y-42,4,4,'#6b4a34');R(x-12,y-36,5,6,'#6b4a34');R(x+4,y-40,4,4,'#6b4a34');
+  R(x+1,y-28,6,6,'#fff');R(x+4,y-26,2,2,'#1a1420');
+  R(x+5,y-20,3,2,'#ff9aa8');R(x+3,y-18,4,2,sad?'#8a4a4a':'#c46a6a');
 }
 function drawDay(){
   R(0,0,W,H,'#d9c49a');
