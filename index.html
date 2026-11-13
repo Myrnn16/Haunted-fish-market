@@ -90,7 +90,7 @@ let ctrlMode='mobile';
 try{ctrlMode=localStorage.getItem('hfm_controls')||'mobile'}catch(e){}
 if(ctrlMode!=='desktop')ctrlMode='mobile';
 let keys={};
-let zoom=1;try{zoom=parseFloat(localStorage.getItem('hfm_zoom'))||1}catch(e){} if(!(zoom>=.55&&zoom<=1.8))zoom=1;
+let zoom=1.25;try{zoom=parseFloat(localStorage.getItem('hfm_zoom'))||1.25}catch(e){} if(!(zoom>=.55&&zoom<=1.8))zoom=1;
 function setZoom(z){zoom=Math.max(.55,Math.min(1.8,Math.round(z*100)/100));try{localStorage.setItem('hfm_zoom',zoom)}catch(e){} const zl=$('zooml');if(zl)zl.textContent=Math.round(zoom*100)+'%';}
 const viewW=()=>W/zoom, viewH=()=>H/zoom;
 function setCtrl(m){ctrlMode=m;try{localStorage.setItem('hfm_controls',m)}catch(e){}applyCtrlUI();}
@@ -351,7 +351,7 @@ function showCreate(fresh){
   </div><div><div class="box"><p>Your fisher</p><canvas id="pv" width="30" height="34" style="width:90px;height:102px;image-rendering:pixelated"></canvas>
   <p>Skin</p><div class="row">${sw('skin',SKIN)}</div><p>Hat</p><div class="row">${sw('hair',HAIR)}</div><p>Outfit</p><div class="row">${sw('suit',SUIT)}</div></div></div></div>
   <div class="row" style="margin-top:auto"><button class="wood" onclick="showTitle()">Back</button><button class="wood" onclick="make()">Create and play</button></div>`;
-  const pg=$('pv').getContext('2d'),old=g;g=pg;R(0,0,30,34,'#1b2250');R(0,24,30,10,'#17294f');drawDiver(15,20,{skin:cr.skin,hair:cr.hair,suit:cr.suit},0,1);g=old;
+  const pg=$('pv').getContext('2d'),old=g;g=pg;R(0,0,30,34,'#1b2250');R(0,24,30,10,'#17294f');drawDiver(15,18,{skin:cr.skin,hair:cr.hair,suit:cr.suit},0,1);g=old;
 }
 function setOpt(k,v){cr[k]=v;showCreate()}
 function make(){
@@ -513,7 +513,7 @@ function updHud(){
 
 /* ---------- drawing ---------- */
 function fishSprite(x,y,ty,d,ph){
-  const w=ty.w;x=Math.round(x);y=Math.round(y);
+  const w=Math.round(ty.w*1.4);x=Math.round(x);y=Math.round(y);
   if(ty.glow){const gr=g.createRadialGradient(x+w/2,y+2,1,x+w/2,y+2,w*1.8);gr.addColorStop(0,ty.c+'66');gr.addColorStop(1,ty.c+'00');g.fillStyle=gr;g.fillRect(x-w*2,y-w*2,w*5,w*4)}
   R(x,y,w,5,ty.c);R(x+1,y-1,w-2,1,ty.c);R(x+1,y+5,w-2,1,ty.c);
   R(x+1,y+3,w-2,2,ty.l);                       // belly
@@ -526,12 +526,15 @@ function fishSprite(x,y,ty,d,ph){
 function drawFloats(){g.font='8px "Courier New"';g.textAlign='center';for(const f of floats){g.globalAlpha=1-f.t/1.2;g.fillStyle='#000';g.fillText(f.txt,f.x+1,f.y-f.t*14+1);g.fillStyle=f.c;g.fillText(f.txt,f.x,f.y-f.t*14)}g.globalAlpha=1}
 function drawDiver(x,y,a,kick,sur,ln){
   const sk=SKIN[a.skin],ht=HAIR[a.hair],su=SUIT[a.suit];
-  R(x-3,y+2,6,5,su);R(x-3,y+2,6,1,'#ffffff22');R(x-1,y+3,2,3,'#ffffff33');
-  if(!sur){R(x-3,y+7,2,2+kick,sk);R(x+1,y+7,2,2-kick,sk);R(x-4,y+8+kick,3,1,'#222a44');R(x+1,y+8-kick,3,1,'#222a44')}
-  x+=ln||0;R(x-5,y-7,10,9,sk);R(x-5,y+1,10,1,'#0003');R(x-6,y-9,12,3,ht);R(x-5,y-10,10,1,ht);R(x-7,y-6,2,4,ht);R(x+5,y-6,2,4,ht);
-  R(x-5,y-4,10,3,'#5ad1ff');R(x-4,y-4,3,3,'#0b1020');R(x+1,y-4,3,3,'#0b1020');R(x-4,y-4,1,1,'#fff');R(x+1,y-4,1,1,'#fff');
-  R(x-4,y-1,2,1,'#ff9aa8');R(x+2,y-1,2,1,'#ff9aa8');R(x-1,y,2,1,'#b45a5a');
-  R(x+6,y-1,4,4,'#a8742a');R(x+7,y,2,2,'#ffe9a0');R(x+7,y-2,2,1,'#6b4a34');
+  if(!sur){R(x-4,y+7,3,8+kick,sk);R(x+1,y+7,3,8-kick,sk);R(x-5,y+15+kick,4,2,'#1c1a22');R(x+1,y+15-kick,4,2,'#1c1a22')}
+  else{R(x-4,y+7,3,6,sk);R(x+1,y+7,3,6,sk)}
+  R(x-5,y-5,10,12,su);R(x-5,y-5,10,1,'#ffffff22');R(x-5,y+6,10,1,'#00000055');R(x-2,y-5,2,12,'#ffffff18');
+  R(x-8,y-4,3,9+kick,sk);R(x+5,y-4,3,9-kick,sk);
+  x+=ln||0;R(x-5,y-15,10,10,sk);R(x-5,y-6,10,1,'#0003');
+  R(x-6,y-17,12,3,ht);R(x-5,y-18,10,1,ht);R(x-7,y-15,2,5,ht);R(x+5,y-15,2,5,ht);
+  R(x-4,y-12,3,3,'#0b0a12');R(x+1,y-12,3,3,'#0b0a12');R(x-3,y-11,1,1,'#e8f4ff');R(x+2,y-11,1,1,'#e8f4ff');
+  R(x-4,y-8,2,1,'#5a3a3a');R(x+2,y-8,2,1,'#5a3a3a');R(x-1,y-7,2,1,'#3a2222');
+  R(x+6,y-3,4,4,'#a8742a');R(x+7,y-2,2,2,'#ffe9a0');R(x+7,y-4,2,1,'#6b4a34');
 }
 function drawNight(){
   g.save();g.scale(zoom,zoom);g.translate(-Math.round(cx)+(shake>0?Math.round((Math.random()-.5)*shake*.5):0),-Math.round(cy)+(shake>0?Math.round((Math.random()-.5)*shake*.5):0));
@@ -611,10 +614,12 @@ function drawTitle2(){
 }
 function chibi(x,y,col,sad){
   x=Math.round(x);y=Math.round(y);
-  R(x-3,y,6,6,col);R(x-3,y,6,1,'#ffffff33');R(x-3,y+6,2,2,'#4a3022');R(x+1,y+6,2,2,'#4a3022');
-  R(x-5,y-10,10,10,'#f6d6b5');R(x-6,y-12,12,4,'#6b4a34');R(x-6,y-9,2,4,'#6b4a34');R(x+4,y-9,2,4,'#6b4a34');
-  R(x-3,y-6,2,2,'#2a1b2e');R(x+1,y-6,2,2,'#2a1b2e');R(x-3,y-6,1,1,'#fff');R(x+1,y-6,1,1,'#fff');
-  R(x-4,y-3,2,1,'#ff9aa8');R(x+2,y-3,2,1,'#ff9aa8');R(x-1,y-2,2,1,sad?'#8a4a4a':'#c46a6a');
+  R(x-4,y+5,3,6,'#4a3022');R(x+1,y+5,3,6,'#4a3022');
+  R(x-5,y-7,10,12,col);R(x-5,y-7,10,1,'#ffffff33');R(x-5,y+4,10,1,'#0003');
+  R(x-8,y-6,3,9,'#f6d6b5');R(x+5,y-6,3,9,'#f6d6b5');
+  R(x-5,y-17,10,10,'#f6d6b5');R(x-6,y-19,12,4,'#6b4a34');R(x-6,y-16,2,5,'#6b4a34');R(x+4,y-16,2,5,'#6b4a34');
+  R(x-4,y-13,3,3,'#1a1420');R(x+1,y-13,3,3,'#1a1420');R(x-3,y-12,1,1,'#fff');R(x+2,y-12,1,1,'#fff');
+  R(x-4,y-10,2,1,'#ff9aa8');R(x+2,y-10,2,1,'#ff9aa8');R(x-1,y-9,2,1,sad?'#8a4a4a':'#c46a6a');
 }
 function drawDay(){
   R(0,0,W,H,'#d9c49a');g.save();g.translate(70,-50);
