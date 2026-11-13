@@ -546,15 +546,17 @@ function drawDiver(x,y,a,kick,sur,ln){
   R(x-6,y-17,12,3,ht);R(x-5,y-18,10,1,ht);R(x-7,y-15,2,5,ht);R(x+5,y-15,2,5,ht);
   R(x-4,y-12,3,3,'#050310');R(x+1,y-12,3,3,'#050310');R(x-3,y-11,1,1,'#7fffd4');R(x+2,y-11,1,1,'#7fffd4');
   R(x-4,y-8,2,1,'#5a3a3a');R(x+2,y-8,2,1,'#5a3a3a');R(x-1,y-7,2,1,'#3a2222');
-  R(x+6,y-3,4,4,'#a8742a');R(x+7,y-2,2,2,'#ffe9a0');R(x+7,y-4,2,1,'#6b4a34');
+  R(x+6,y-3,4,4,'#a8742a');R(x+7,y-2,2,2,'#ffe9a0');R(x+7,y-4,2,1,'#6b4a34');R(x+7,y-6,2,2,'#ff8a3a');
 }
 function drawNight(){
   g.save();g.scale(zoom,zoom);g.translate(-Math.round(cx)+(shake>0?Math.round((Math.random()-.5)*shake*.5):0),-Math.round(cy)+(shake>0?Math.round((Math.random()-.5)*shake*.5):0));
-  ['#050310','#0a0618','#120a2a','#1a0f38'].forEach((c,i)=>R(0,i*SEA/4,WW,SEA/4+1,c));
+  ['#0d0a1e','#14102e','#1e1638','#241a42'].forEach((c,i)=>R(0,i*SEA/4,WW,SEA/4+1,c));
+  for(let i=0;i<4;i++){const cxp=(i*90+40)%WW,cyp=8+i*10;R(cxp,cyp,26,5,'rgba(120,100,160,.35)');R(cxp+6,cyp-3,18,4,'rgba(120,100,160,.3)');R(cxp+10,cyp+4,14,3,'rgba(120,100,160,.25)')}
+  for(let i=0;i<5;i++){const txp=(i*130+20)%WW;R(txp,SEA-26,4,26,'#0a1420');R(txp-6,SEA-14,16,3,'#0a1420');R(txp-3,SEA-20,10,3,'#0a1420');R(txp-1,SEA-24,6,2,'#0e1a28')}
   for(const s of stars)R(s.x,s.y,1,1,Math.sin(t*2+s.s)>0?'#dfe9ff':'#6b7bb0');
   const mx=WW-70;R(mx,16,13,13,'#f1ecd0');R(mx+2,14,9,2,'#f1ecd0');R(mx+2,29,9,2,'#f1ecd0');R(mx+8,18,3,3,'#d3cdae');R(mx+3,23,2,2,'#d3cdae');
   R(0,SEA-8,WW,8,'#1c2650');for(let x=0;x<WW;x+=18)R(x,SEA-8-(x*5%7),14,3,'#1c2650'); // far shore
-  for(let y=SEA;y<FLOOR+20;y+=30){const k=Math.min(1,(y-SEA)/(FLOOR-SEA));R(0,y,WW,31,`rgb(${26-16*k|0},${14-9*k|0},${58-38*k|0})`)}
+  for(let y=SEA;y<FLOOR+20;y+=30){const k=Math.min(1,(y-SEA)/(FLOOR-SEA));R(0,y,WW,31,`rgb(${22-14*k|0},${30-20*k|0},${62-40*k|0})`)}
   for(const r of rays)for(let y=0;y<120;y+=6)R(r.x+y*.35+Math.sin(t+r.x)*3,SEA+y,r.w,6,`rgba(170,205,255,${.07-y*.0005})`);
   for(let x=0;x<WW;x+=4){R(x,SEA+Math.round(Math.sin(x*.2+t*2)*1.2),4,1,'#6c8fd0');R(x+2,SEA+2+Math.round(Math.sin(x*.2+t*2)*1.2),2,1,'#3b5a99')}
   drawTerrain();drawStructs();
@@ -565,11 +567,15 @@ function drawNight(){
   fish.forEach(f=>fishSprite(f.x,f.y+Math.sin(f.ph),f.ty,f.dir||1,f.ph));drawFlares();drawMobs();drawParts();
   for(const b of bubbles){const bx=b.x+Math.sin(b.y)*1.5;R(bx,b.y,3,3,'rgba(190,230,255,.6)');R(bx+1,b.y+1,1,1,'#fff')}
   const sur=mode==='boat'&&py<=SEA+4,x=Math.round(px),y=Math.round(py+(sur?Math.sin(t*2)*1.2:0));
-  R(0,SEA-8,220,10,'#140a24');R(0,SEA-8,220,3,'#3a2a4a');
+  R(0,SEA-8,220,10,'#4a3022');R(0,SEA-8,220,3,'#6b4a34');
   for(let x=0;x<220;x+=16){R(x,SEA-8,2,10,'#241a12');R(x+4,SEA-7,8,2,'#7a5a3e')}
   for(let x=20;x<220;x+=60){R(x,SEA-8,4,40,'#3a2a1e');R(x-2,SEA-8,8,2,'#4a3826')}
   R(14,SEA-38,4,30,'#4a3826');R(10,SEA-42,12,5,'#7fffd4');R(11,SEA-41,10,3,'#d8fff4');
-  R(28,SEA-40,44,32,'#3a2a1e');R(28,SEA-40,44,3,'#241a12');R(46,SEA-30,8,16,'#241a12');R(30,SEA-38,40,2,'#5a4632');
+  R(28,SEA-40,44,32,'#6b4a34');R(28,SEA-40,44,3,'#4a3022');R(28,SEA-40,44,1,'#8a6a4a');
+  R(32,SEA-30,10,6,'#2a1c16');R(33,SEA-29,8,2,'#ff8a3a');R(34,SEA-28,6,1,'#ffd98a');
+  R(58,SEA-28,8,4,'#4a3022');R(58,SEA-32,8,2,'#7a5236');R(62,SEA-20,4,12,'#2a1c16');
+  R(46,SEA-30,8,16,'#241a12');R(30,SEA-38,40,2,'#5a4632');R(52,SEA-38,6,8,'#8a2f3f');R(54,SEA-36,2,4,'#ffd98a');
+  R(30,SEA-26,3,3,'#ffd98a');R(68,SEA-26,3,3,'#ffd98a');
   R(150,SEA-34,3,26,'#4a3826');R(142,SEA-44,20,11,'#e8d9b8');R(145,SEA-42,14,2,'#8a2f3f');R(145,SEA-39,14,1,'#4a3826');
   R(218,SEA-8,5,30,'#241a12');R(216,SEA-14,9,5,'#ffd98a');
   drawBoat(Math.round(bx),Math.sin(t*2)*1.2);
@@ -587,7 +593,7 @@ function drawNight(){
 }
 function drawBoat(x,b){
   const y=Math.round(SEA+b),ln=Math.round(bvx*2);
-  R(x-18,y-3,36,5,'#3a2a4a');R(x-16,y+2,32,4,'#241a38');R(x-12,y+6,24,2,'#140a24');R(x-18,y-4,36,2,'#7b2fff');
+  R(x-18,y-3,36,5,'#7a5236');R(x-16,y+2,32,4,'#5a3b26');R(x-12,y+6,24,2,'#3d2616');R(x-18,y-4,36,2,'#a8704a');
   for(let i=-14;i<16;i+=6)R(x+i,y-1,1,7,'#3d2616');
   R(x-18,y-7,3,4,'#5a3b26');R(x+15,y-9,3,6,'#5a3b26');
   R(x+12,y-24,2,20,'#5a3b26');R(x+14+ln,y-22,8-Math.abs(ln),11,'#e8d6c0');R(x+14+ln,y-22,8,1,'#fff');R(x+16+ln,y-18,3,1,'#c9b89c');
@@ -600,8 +606,8 @@ function drawTerrain(){
     const y=SEA+r*8;
     if(!grid[r*cols+c]){if(r>surf[c])R(c*8,y,8,8,'rgba(4,2,14,.6)');continue}
     const k=r/rows,h=(c*7+r*13)%5,top=r===0||!grid[(r-1)*cols+c];
-    R(c*8,y,8,8,`rgb(${52-24*k+h|0},${34-16*k+h|0},${86-36*k+h|0})`);
-    if(top)R(c*8,y,8,2,`rgb(${110-40*k|0},${70-28*k|0},${170-60*k|0})`);
+    R(c*8,y,8,8,`rgb(${96-40*k+h|0},${64-28*k+h|0},${44-20*k+h|0})`);
+    if(top)R(c*8,y,8,2,`rgb(${90-30*k|0},${120-40*k|0},${60-20*k|0})`);
     if(h===0)R(c*8+2,y+3,3,2,'rgba(0,0,0,.2)');
   }
 }
