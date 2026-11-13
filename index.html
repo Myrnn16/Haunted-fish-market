@@ -18,7 +18,7 @@
   #bag{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(88%,460px);max-height:86%;overflow:auto;display:none;flex-direction:column;gap:6px;background:rgba(58,38,24,.97);border:3px solid #2f1d12;box-shadow:inset 0 3px 0 #7a5236;padding:12px;z-index:6;color:#ffe9c4;font-size:14px}
   .ig{display:grid;grid-template-columns:1fr 1fr;gap:5px}.cell{display:flex;align-items:center;gap:6px;background:#47301f;border:2px solid #2f1d12;padding:4px;cursor:pointer}.cell.empty{opacity:.45}
   #bag p{margin:0;min-height:16px;font-size:13px}
-  #cw{width:110px;height:10px;border:2px solid #cfe3ff;background:#0b1020;margin:2px 0 0 auto}#cf{height:100%;width:0;background:#b46ee0}
+  #cw{width:90px;height:10px;border:2px solid #cfe3ff;background:#0b1020;margin:2px 0 0 auto}#cf{height:100%;width:0;background:#b46ee0}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px;width:100%}.grid2 button{width:100%;font-size:14px;padding:10px}
   #rot{display:none;position:fixed;top:0;left:0;right:0;text-align:center;padding:6px;background:#2f1d12;color:#ffe9c4;font-size:13px;z-index:9}
   @media (orientation:portrait){#rot{display:block}}
@@ -30,7 +30,7 @@
   canvas#c{width:100%;height:100%;image-rendering:pixelated;touch-action:none;display:block}
   #hud{position:absolute;top:10px;left:12px;font-size:16px;text-shadow:0 1px 0 #000,0 0 6px #000;line-height:1.5}
   #air{position:absolute;top:10px;right:12px;font-size:14px;text-align:right;display:none;text-shadow:0 1px 0 #000}
-  #bw{width:110px;height:14px;border:2px solid #cfe3ff;background:#0b1020;margin-top:2px;margin-left:auto}
+  #bw{width:90px;height:14px;border:2px solid #cfe3ff;background:#0b1020;margin-top:2px;margin-left:auto}
   #bf{height:100%;width:100%;background:#5ad1ff}
   #panel{position:absolute;inset:0;z-index:5;display:none;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:16px;overflow-y:auto;color:var(--cream)}
   #panel h1{margin:6px 0 0;font-size:38px;line-height:1.05;letter-spacing:1px;color:var(--cream);text-shadow:0 0 18px #ffb347,3px 3px 0 var(--dark)}
@@ -42,7 +42,7 @@
   button.wood{border-color:var(--dark);background:var(--wood);color:var(--cream);box-shadow:inset 0 3px 0 #7a5236,inset 0 -3px 0 #3d2616}
   button.wood:active{background:#47301f}button.sm{padding:10px 12px}
   button.opt.on{background:#9a6a3e;border-color:#ffe9c4}
-  #msg{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);font-size:14px;opacity:.95;max-width:40%;text-align:center;text-shadow:0 1px 0 #000;pointer-events:none}
+  #msg{position:absolute;bottom:64px;left:50%;transform:translateX(-50%);font-size:14px;opacity:.95;max-width:60%;text-align:center;text-shadow:0 1px 0 #000;pointer-events:none}
   .list{flex:1;width:100%;overflow-y:auto;display:flex;flex-direction:column;gap:8px;min-height:0}
   .card{display:flex;justify-content:space-between;align-items:center;gap:6px;background:var(--wood);border:3px solid var(--dark);box-shadow:inset 0 3px 0 #7a5236;padding:10px;text-align:left}
   .card small{opacity:.85}
@@ -528,17 +528,25 @@ function fishSprite(x,y,ty,d,ph){
 function drawFloats(){g.font='16px "Courier New"';g.textAlign='center';for(const f of floats){g.globalAlpha=1-f.t/1.2;g.fillStyle='#000';g.fillText(f.txt,f.x+2,f.y-f.t*28+2);g.fillStyle=f.c;g.fillText(f.txt,f.x,f.y-f.t*28)}g.globalAlpha=1}
 function drawDiver(x,y,a,kick,sur,ln){
   const sk=SKIN[a.skin],ht=HAIR[a.hair],su=SUIT[a.suit];
-  if(!sur){R(x-8,y+14,6,16+kick*2,sk);R(x+2,y+14,6,16-kick*2,sk);R(x-10,y+30+kick*2,8,4,'#1c1a22');R(x+2,y+30-kick*2,8,4,'#1c1a22');R(x-8,y+14,6,2,'#00000033')}
-  else{R(x-8,y+14,6,12,sk);R(x+2,y+14,6,12,sk)}
-  R(x-10,y-10,20,24,su);R(x-10,y-10,20,2,'#ffffff22');R(x-10,y+12,20,2,'#00000055');R(x-4,y-10,4,24,'#ffffff14');R(x+6,y-10,2,24,'#00000033');
-  R(x-10,y+2,20,4,'#2f1d12');R(x-2,y+2,4,4,'#c89a50');
-  R(x-16,y-8,6,18+kick*2,sk);R(x+10,y-8,6,18-kick*2,sk);
-  x+=ln||0;R(x-10,y-30,20,20,sk);R(x-10,y-12,20,2,'#0003');
-  R(x-12,y-34,24,6,ht);R(x-10,y-36,20,2,ht);R(x-14,y-30,4,10,ht);R(x+10,y-30,4,10,ht);R(x-8,y-38,16,4,ht);R(x-4,y-40,8,3,ht);
-  R(x-8,y-24,6,6,'#fff');R(x+2,y-24,6,6,'#fff');R(x-6,y-22,2,2,'#1a1a1a');R(x+4,y-22,2,2,'#1a1a1a');
-  R(x-8,y-16,4,2,'#5a3a3a');R(x+4,y-16,4,2,'#5a3a3a');R(x-2,y-14,4,2,'#3a2222');
-  R(x+12,y-6,8,8,'#a8742a');R(x+14,y-4,4,4,'#ffe9a0');R(x+14,y-8,4,2,'#6b4a34');
-  const fl=Math.sin(t*9)*2;R(x+15,y-12+fl,4,4,'#ff8a3a');R(x+16,y-11+fl,2,2,'#ffd98a');
+  x+=ln||0;
+  // Side profile, facing right: back leg / front leg in stride, never front-facing
+  if(!sur){R(x-10,y+14,6,16+kick*2,sk);R(x+0,y+14,6,16-kick*2,sk);R(x-12,y+30+kick*2,8,4,'#1c1a22');R(x+0,y+30-kick*2,8,4,'#1c1a22')}
+  else{R(x-10,y+14,6,12,sk);R(x+0,y+14,6,12,sk)}
+  // Torso, dark red shirt, belt, shading on the back side
+  R(x-10,y-10,18,24,su);R(x-10,y-10,18,2,'#ffffff22');R(x-10,y+12,18,2,'#00000055');R(x-10,y-10,3,24,'#00000033');
+  R(x-10,y+2,18,4,'#2f1d12');R(x-2,y+2,4,4,'#c89a50');
+  // Back arm (short, behind torso), front arm reaching forward with the torch
+  R(x-12,y-8,5,16+kick,sk);
+  R(x+4,y-6,12,5,sk);R(x+14,y-8,5,5,sk);
+  // Torch in the forward hand: handle + flame
+  R(x+16,y-14,3,10,'#6b4a34');const fl=Math.sin(t*9)*2;R(x+15,y-18+fl,5,5,'#ff8a3a');R(x+16,y-17+fl,3,3,'#ffd98a');
+  // Head in profile: nose to the right, ONE white eye on the facing side, black spiky hair swept back
+  R(x-8,y-30,18,20,sk);R(x+8,y-24,4,4,sk);R(x-8,y-12,18,2,'#0003');
+  R(x-10,y-34,22,6,ht);R(x-8,y-36,18,2,ht);R(x-12,y-30,4,10,ht);R(x-14,y-28,6,4,ht);R(x-6,y-38,14,4,ht);R(x+2,y-40,8,3,ht);
+  R(x+2,y-24,6,6,'#fff');R(x+4,y-22,2,2,'#1a1a1a');
+  R(x+4,y-16,4,2,'#5a3a3a');R(x+0,y-14,4,2,'#3a2222');
+  // Harpoon held low in the back hand
+  R(x-14,y-2,4,4,'#a8742a');R(x-13,y-1,2,2,'#ffe9a0');
 }
 function drawMobs(){
   for(const m of mobs){const x=Math.round(m.x),y=Math.round(m.y);if(m.flash>0)R(x-18,y-18,36,36,'rgba(255,255,255,.35)');
