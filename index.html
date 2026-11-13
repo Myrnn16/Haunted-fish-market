@@ -8,7 +8,7 @@
   :root{box-sizing:border-box;--bg:#12100d;--ink:#d8cdb4;--wood:#4a3826;--dark:#241a12;--cream:#e8d9b8;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
   html,body{margin:0;height:100%;height:100dvh;background:var(--bg);color:var(--ink);font-family:"Courier New",monospace;overscroll-behavior:none}
   body{display:flex;flex-direction:column;align-items:center;justify-content:center}
-  #wrap{position:relative;width:min(100vw,calc(100dvh*16/9));aspect-ratio:16/9}
+  #wrap{position:relative;width:100vw;height:100dvh;height:100svh}
   #hot{position:absolute;top:6px;left:50%;transform:translateX(-50%);display:none;gap:5px;z-index:3}
   .slot{position:relative;width:38px;height:38px;background:#5a3b26;border:3px solid #2f1d12;box-shadow:inset 0 3px 0 #7a5236;display:flex;align-items:center;justify-content:center;border-radius:4px;cursor:pointer}
   .slot.on{border-color:#ffe9c4}.slot b{position:absolute;right:1px;bottom:-1px;font-size:11px;color:#ffe9c4;text-shadow:1px 1px 0 #000}
@@ -62,7 +62,7 @@
 <div id="panel"></div>
 <div id="hot"></div><button id="bagb" class="wood sm" style="display:none">Bag</button><div id="act" style="display:none">Use</div><div id="bag"></div>
 <div id="stick"><div id="knob"></div></div>
-<div id="bar"><button id="zin" class="wood sm" style="display:none" title="Zoom in">+</button><button id="zout" class="wood sm" style="display:none" title="Zoom out">&minus;</button><span id="zooml" class="wood sm" style="display:none;padding:8px 10px;font-size:13px">100%</span><button id="btn" style="display:none"></button><button id="home" class="wood sm" style="display:none">Menu</button></div>
+<div id="bar"><button id="fs" class="wood sm" title="Full screen">&#9974;</button><button id="zin" class="wood sm" style="display:none" title="Zoom in">+</button><button id="zout" class="wood sm" style="display:none" title="Zoom out">&minus;</button><span id="zooml" class="wood sm" style="display:none;padding:8px 10px;font-size:13px">100%</span><button id="btn" style="display:none"></button><button id="home" class="wood sm" style="display:none">Menu</button></div>
 <div id="msg"></div></div>
 <div id="rot">Turn your phone sideways for the best view</div>
 <script>
@@ -447,6 +447,7 @@ window.addEventListener('keydown',e=>{
   else if(k==='escape'){persist();showTitle()}
 });
 window.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false});
+$('fs').onclick=()=>{const w=$('wrap');if(document.fullscreenElement)document.exitFullscreen();else if(w.requestFullscreen)w.requestFullscreen()};
 $('zin').onclick=()=>setZoom(zoom+.15);$('zout').onclick=()=>setZoom(zoom-.15);
 cv.addEventListener('wheel',e=>{if(phase!=='night')return;e.preventDefault();setZoom(zoom+(e.deltaY<0?.15:-.15))},{passive:false});
 
@@ -467,14 +468,14 @@ function update(){
       px=Math.max(16,Math.min(200,px));bx=220;
     }else if(mode==='boat'){
       bvx+=(jv.x*1.7-bvx)*.07;bx+=bvx;vx=bvx;vy=0;if(Math.abs(bvx)>.5&&Math.random()<.3)parts.push({x:bx-Math.sign(bvx)*18,y:SEA+2,vx:-bvx*.2,vy:-.1,l:.6,k:'foam'});
-      bx=Math.max(20,Math.min(WW-20,bx));px=bx;py=SEA-6;
+      if(bx<230){bx=230;if(bvx<0)bvx=0}bx=Math.max(230,Math.min(WW-20,bx));px=bx;py=SEA-6;
     }else{
       {const a=.2*spd(),mx=2.1*spd();
        vx+=jv.x*a;vy+=jv.y*a+.01;vx*=.9;vy*=.9;const sp=Math.hypot(vx,vy);if(sp>mx){vx*=mx/sp;vy*=mx/sp}if(py<SEA-6&&vy<0)vy=0
        if(Math.abs(vx)>.1)face=Math.sign(vx);
        if(py>SEA+4&&Math.hypot(vx,vy)>.6&&Math.random()<.3)parts.push({x:px-vx*4,y:py,vx:0,vy:-.2,l:.8,k:'bub'});
        const nx=px+vx,ny=py+vy;if(!blocked(nx,py))px=nx;else vx*=-.3;if(!blocked(px,ny))py=ny;else vy*=-.3;
-       bvx*=.96;bx=Math.max(20,Math.min(WW-20,bx+bvx))}
+       bvx*=.96;bx=Math.max(230,Math.min(WW-20,bx+bvx))}
       px=Math.max(8,Math.min(WW-8,px));py=Math.max(SEA-40,Math.min(FLOOR-8,py));
     }
     const near=Math.abs(px-bx)<22&&py<SEA+14;
