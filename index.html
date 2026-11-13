@@ -28,7 +28,7 @@
   #knob::before{content:"";position:absolute;left:11px;top:18px;width:6px;height:7px;background:#2a1b2e;box-shadow:20px 0 0 #2a1b2e}
   #knob::after{content:"";position:absolute;left:6px;top:30px;width:10px;height:5px;background:#ff9aa8;box-shadow:24px 0 0 #ff9aa8}
   canvas#c{width:100%;height:100%;image-rendering:pixelated;touch-action:none;display:block}
-  #hud{position:absolute;top:8px;left:10px;font-size:13px;text-shadow:0 1px 0 #000,0 0 6px #000;line-height:1.3;max-width:62%}
+  #hud{position:absolute;top:8px;left:10px;font-size:12px;text-shadow:0 1px 0 #000,0 0 6px #000;line-height:1.3;max-width:48%}
   #air{position:absolute;top:10px;right:12px;font-size:14px;text-align:right;display:none;text-shadow:0 1px 0 #000}
   #bw{width:90px;height:14px;border:2px solid #cfe3ff;background:#0b1020;margin-top:2px;margin-left:auto}
   #bf{height:100%;width:100%;background:#5ad1ff}
@@ -44,7 +44,7 @@
   button.opt.on{background:#9a6a3e;border-color:#ffe9c4}
   #daybar{position:absolute;left:10px;bottom:10px;display:none;gap:6px;z-index:4;flex-wrap:wrap;max-width:72%}
   #daybar button{font-size:13px;padding:8px 10px}
-  #msg{position:absolute;top:64px;left:50%;transform:translateX(-50%);font-size:13px;opacity:.95;max-width:70%;text-align:center;text-shadow:0 1px 0 #000;pointer-events:none}
+  #msg{position:absolute;bottom:84px;left:50%;transform:translateX(-50%);font-size:13px;opacity:.95;max-width:60%;text-align:center;text-shadow:0 1px 0 #000;pointer-events:none;transition:opacity 1s}
   .list{flex:1;width:100%;overflow-y:auto;display:flex;flex-direction:column;gap:8px;min-height:0}
   .card{display:flex;justify-content:space-between;align-items:center;gap:6px;background:var(--wood);border:3px solid var(--dark);box-shadow:inset 0 3px 0 #7a5236;padding:10px;text-align:left}
   .card small{opacity:.85}
@@ -475,7 +475,7 @@ function sail(){
    const q=qs[Math.floor(Math.random()*qs.length)];quest={...q,have:0,done:false,coins:15+day*5,tokens:1};}
   breath=maxB();nightT=70;chests.forEach(c=>c.open=false);snap=1;mobs=[];parts=[];vx=vy=0;bvx=0;hurt=0;shake=0;wasUnder=false;hp=3;curse=0;atk=null;cd=0;flares=[];for(let i=0;i<mobN();i++)spawnMob();$('panel').style.display='none';
   applyCtrlUI();jv={x:0,y:0};nightUI(1);$('btn').style.display='block';$('btn').onclick=toggleBoat;$('btn').disabled=false;$('home').style.display='block';$('air').style.display='block';
-  $('msg').textContent=ctrlMode==='desktop'?`On the dock: A/D walk, W/Space jump, E board boat. Order: ${order.need} ${T[order.type].n}. Quest: ${quest.txt}. L = boss lure.`:`Walk the dock, then E to board. Order: ${order.need} ${T[order.type].n}. Quest: ${quest.txt}.`;
+  $('msg').textContent=ctrlMode==='desktop'?'On the dock: A/D walk, W/Space jump, E board boat.':'Walk the dock, then E to board.';$('msg').style.opacity=.95;setTimeout(()=>{if($('msg'))$('msg').style.opacity=0},8000);
 }
 function startDay(){
   if(quest&&!quest.done&&quest.kind==='dawn'){quest.have=1;checkQuest()}
