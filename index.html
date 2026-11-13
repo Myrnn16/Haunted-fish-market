@@ -49,6 +49,7 @@
   .bot{width:100%}.bot button{width:100%}
   .row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;width:100%}
   .box{width:100%;background:rgba(90,59,38,.85);border:3px solid var(--dark);padding:8px;box-sizing:border-box}
+  .keys{font-size:12px;text-align:left;line-height:1.7;margin:8px 0 0}
   #panel>*{max-width:480px}#panel>.two{max-width:600px}.two{display:flex;gap:8px;width:100%;align-items:flex-start;text-align:left}.two>div{flex:1;display:flex;flex-direction:column;gap:8px;min-width:0}
   .sw{width:30px;height:30px;padding:0;border:3px solid var(--dark)}.sw.on{border-color:#fff}
   input{font:inherit;font-size:16px;width:100%;box-sizing:border-box;padding:8px;background:#2a1a10;color:var(--cream);border:3px solid var(--dark)}
@@ -85,6 +86,12 @@ let px=180,py=SEA-6,breath=25,nightT=70,dayT=30,fish=[],floats=[],bubbles=[],cus
 let kelp=[],stars=[],corals=[],eyes=[],rays=[],grid=[],cols=0,rows=0,surf=[],chests=[],ruins=[],mode='boat',bx=180;
 let vx=0,vy=0,face=1,parts=[],mobs=[],hurt=0,shake=0,bvx=0,wasUnder=false,snap=1;
 let hp=3,curse=0,sel=0,atk=null,cd=0,flares=[],hl=0,lastHK='';
+let ctrlMode='mobile';
+try{ctrlMode=localStorage.getItem('hfm_controls')||'mobile'}catch(e){}
+if(ctrlMode!=='desktop')ctrlMode='mobile';
+let keys={};
+function setCtrl(m){ctrlMode=m;try{localStorage.setItem('hfm_controls',m)}catch(e){}applyCtrlUI();}
+function applyCtrlUI(){const st=$('stick');if(!st)return;st.style.display=(phase==='night'&&ctrlMode==='mobile')?'block':'none';}
 const maxB=()=>25+10*lung,spd=()=>1+.25*fins;
 
 try{worlds=JSON.parse(localStorage.getItem('hfm_worlds')||'[]')}catch(e){worlds=[]}
@@ -307,15 +314,27 @@ function spawn(any){
 /* ---------- menus ---------- */
 function hideGame(){nightUI(0);$('stick').style.display='none';$('air').style.display='none';$('btn').style.display='none';$('home').style.display='none';$('hud').innerHTML='';$('msg').textContent=''}
 function showTitle(){
-  phase='title';hideGame();delI=-1;
+  phase='title';hideGame();delI=-1;keys={};
   const p=$('panel');p.style.display='flex';p.style.justifyContent='';p.style.paddingRight='46%';p.style.background='linear-gradient(90deg,rgba(6,8,22,.78) 55%,rgba(6,8,22,0))';
   p.innerHTML=`<h1>Haunted Fish Market</h1><p>${worlds.length?'Choose your world':'No worlds yet. Make one!'}</p>
   <div class="list">${worlds.map((w,i)=>`<div class="card"><div><b>${esc(w.name)}</b><br><small>${SZ[w.size]} · ${DF[w.diff]}<br>Day ${w.day} · ${w.coins} coins</small></div>
   <div><button class="wood sm" onclick="play(${i})">Play</button> <button class="wood sm" onclick="del(${i})">${delI===i?'Sure?':'X'}</button></div></div>`).join('')}</div>
-  <div class="bot"><button class="wood" onclick="showCreate(1)">Create new world</button></div>`;
+  <div class="bot"><button class="wood" onclick="showCreate(1)">Create new world</button></div>
+  <div class="bot" style="margin-top:8px"><button class="wood" onclick="showSettings()">Settings</button></div>
+  <p>Controls: ${ctrlMode==='desktop'?'Desktop (WASD + Space)':'Mobile (joystick + Use)'}</p>`;
 }
 function del(i){if(delI===i){worlds.splice(i,1);persist();cur=null}else delI=i;showTitle2()}
 function showTitle2(){const k=delI;showTitle();delI=k;if(k>=0){const b=$('panel').querySelectorAll('.card')[k];if(b)b.querySelectorAll('button')[1].textContent='Sure?'}}
+function showSettings(){
+  phase='settings';hideGame();keys={};
+  const p=$('panel');p.style.display='flex';p.style.justifyContent='';p.style.paddingRight='';p.style.background='rgba(6,8,22,.8)';
+  p.innerHTML=`<h2>Settings</h2>
+  <div class="box"><p>Controls</p><div class="row">
+  <button class="wood sm opt${ctrlMode==='mobile'?' on':''}" onclick="setCtrl('mobile');showSettings()">Mobile</button>
+  <button class="wood sm opt${ctrlMode==='desktop'?' on':''}" onclick="setCtrl('desktop');showSettings()">Desktop</button>
+  </div><p class="keys">Mobile: on-screen joystick + Use button.<br>Desktop: WASD / Arrow keys to move · Space to Use · E to Jump out / Board boat · 1-3 to pick Harpoon / Flare / Air bottle · B for Bag · Esc for Menu.<br><br>Desktop mode hides the on-screen joystick. The Use button still works with a mouse click.</p></div>
+  <div class="row" style="margin-top:auto"><button class="wood" onclick="showTitle()">Back</button></div>`;
+}
 function showCreate(fresh){
   phase='create';
   if(fresh)cr={name:'World '+(worlds.length+1),size:1,diff:1,skin:0,hair:0,suit:0};
@@ -348,8 +367,8 @@ $('home').onclick=()=>{persist();showTitle()};
 function sail(){
   phase='night';fish=[];floats=[];bubbles=[];for(let i=0;i<fishN();i++)spawn(true);
   bx=WW/2;mode='boat';px=bx;py=SEA-6;breath=maxB();nightT=70;chests.forEach(c=>c.open=false);snap=1;mobs=[];parts=[];vx=vy=0;bvx=0;hurt=0;shake=0;wasUnder=false;hp=3;curse=0;atk=null;cd=0;flares=[];for(let i=0;i<mobN();i++)spawnMob();$('panel').style.display='none';
-  $('stick').style.display='block';jv={x:0,y:0};nightUI(1);$('btn').style.display='block';$('btn').onclick=toggleBoat;$('btn').disabled=false;$('home').style.display='block';$('air').style.display='block';
-  $('msg').textContent='Drag to sail. Jump out to dive. Explore caves for loot!';
+  applyCtrlUI();jv={x:0,y:0};nightUI(1);$('btn').style.display='block';$('btn').onclick=toggleBoat;$('btn').disabled=false;$('home').style.display='block';$('air').style.display='block';
+  $('msg').textContent=ctrlMode==='desktop'?'WASD / arrows to move. Space to Use. E to Jump out / Board boat.':'Drag to sail. Jump out to dive. Explore caves for loot!';
 }
 function startDay(){
   phase='day';dayT=30;custs=[];floats=[];spawnT=1;$('air').style.display='none';$('stick').style.display='none';nightUI(0);persist();
@@ -405,9 +424,26 @@ st.addEventListener('pointerdown',e=>{st.setPointerCapture(e.pointerId);jset(e)}
 st.addEventListener('pointermove',e=>{if(e.buttons||e.pointerType==='touch')jset(e)});
 const jend=()=>{jv={x:0,y:0};kn.style.transform=''};
 st.addEventListener('pointerup',jend);st.addEventListener('pointercancel',jend);
+window.addEventListener('keydown',e=>{
+  const k=e.key.toLowerCase();
+  if(k===' '||k.indexOf('arrow')===0)e.preventDefault();
+  if(phase!=='night'&&phase!=='day')return;
+  keys[k]=true;
+  if(e.repeat)return;
+  if(k===' '){useItem()}
+  else if(k==='e'){toggleBoat()}
+  else if(k==='b'&&phase==='night'){toggleBag()}
+  else if(k==='1'||k==='2'||k==='3'){sel=+k-1;lastHK='';renderHot()}
+  else if(k==='escape'){persist();showTitle()}
+});
+window.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false});
 
 function update(){
   t+=1/60;
+  if(ctrlMode==='desktop'&&phase==='night'){
+    const l=(keys['a']||keys['arrowleft'])?1:0,r=(keys['d']||keys['arrowright'])?1:0,u=(keys['w']||keys['arrowup'])?1:0,dn=(keys['s']||keys['arrowdown'])?1:0;
+    jv={x:r-l,y:dn-u};
+  }
   if(phase==='night'&&$('bag').style.display==='flex')return;
   for(const f of floats)f.t+=1/60;floats=floats.filter(f=>f.t<1.2);
   if(phase==='night'){
