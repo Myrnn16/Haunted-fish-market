@@ -797,7 +797,7 @@ function drawDiver(x,y,a,kick,sur,ln){
     g.save();g.translate(x,seatY);g.rotate(lean);g.translate(-x,-seatY);
     if(im){
       const sw=im.naturalWidth,sh=im.naturalHeight,cut=Math.round(sh*.62);
-      const dh=48,dw=Math.round(dh*sw/cut);
+      const dh=37,dw=Math.round(dh*sw/cut);
       g.imageSmoothingEnabled=false;
       g.drawImage(im,0,0,sw,cut,Math.round(x-dw/2),Math.round(seatY-dh),dw,dh);
     }else{
@@ -811,24 +811,34 @@ function drawDiver(x,y,a,kick,sur,ln){
     g.restore();
     return;
   }
-  let im=null,h=80,dx=x,dy=y-44;
+  // DIVER_SCALE 0.78: ~22% smaller. Feet are ANCHORED to the ground:
+  // footY is the surface he stands on (dock top = py+34 when py=SEA-50),
+  // and the sprite is drawn top-down from the feet, so bob/breathing can
+  // never lift his boots off the ground. Walk boots sit at ~95% of the
+  // walk sprite height, idle boots at ~99% (measured from the PNG alpha).
+  const DS=.78,footY=y+34;
+  let im=null,h=62,dx=x,dy=footY-62,footFrac=.99,crop=1;
   if(sur){im=spr('diver_idle')}
-  else if(mode==='swim'){im=spr('diver_swim');h=56}
-  else if(spn>.4){im=spr('diver_walk')}
-  else{im=spr('diver_idle')}
+  else if(mode==='swim'){im=spr('diver_swim');h=44}
+  else if(spn>.4){im=spr('diver_walk');footFrac=.95;crop=.92}
+  else{im=spr('diver_idle');crop=.92}
   if(im){
     const w=Math.round(h*im.naturalWidth/im.naturalHeight);
-    dx=x-Math.round(w/2);if(mode==='swim')dy=y-Math.round(h/2);
-    // Life, not a static slide: swim rocks with the kick, walk leans and bobs,
-    // idle breathes. All as small rotations/bobs around the diver's centre.
-    const cxp=x,cyp=mode==='swim'?y:y-20;
+    dx=x-Math.round(w/2);dy=mode==='swim'?y-Math.round(h/2):footY-Math.round(h*footFrac);
+    // Life, not a static slide: swim rocks with the kick, walk leans and
+    // bobs 1px max, idle breathes via height pulse only (feet stay planted).
+    const cxp=x,cyp=mode==='swim'?y:footY-Math.round(h*footFrac/2);
     let rot=0,bob=0,hh=h;
     if(mode==='swim'){rot=Math.sin(t*(5+spn*5))*.07+vy*.02;bob=Math.sin(t*2.2)*1.5}
-    else if(spn>.4){rot=face*.05;bob=-Math.abs(Math.sin(t*(5+spn*5)))*3}
-    else{hh=h*(1+Math.sin(t*2)*.02);bob=Math.sin(t*2)*1}
+    else if(spn>.4){rot=face*.05;bob=-Math.abs(Math.sin(t*(5+spn*5)))*1}
+    else{hh=h*(1+Math.sin(t*2)*.02);bob=0}
     g.save();g.translate(cxp,cyp+bob);g.rotate(rot);g.translate(-cxp,-cyp);
     const w2=Math.round(hh*im.naturalWidth/im.naturalHeight);
-    drawSpr(im,x-Math.round(w2/2),mode==='swim'?y-Math.round(hh/2):y-44,w2,hh,false);
+    const top=mode==='swim'?y-Math.round(hh/2):footY-Math.round(hh*footFrac);
+    // Crop the right 8% of idle/walk sprites: a detached brown blob sits
+    // at x~300-319 in the source image and reads as a floating piece.
+    g.imageSmoothingEnabled=false;
+    g.drawImage(im,0,0,Math.round(im.naturalWidth*crop),im.naturalHeight,Math.round(x-w2/2),Math.round(top),Math.round(w2*crop),Math.round(hh));
     g.restore();return;
   }
   drawDiverCode(x,y,a,kick,sur,ln);
