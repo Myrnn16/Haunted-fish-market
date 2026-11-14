@@ -32,9 +32,16 @@
   #air{position:absolute;top:54px;right:10px;font-size:11px;text-align:right;display:none;text-shadow:0 1px 0 #000;background:rgba(74,48,32,.85);padding:4px 6px;border:8px solid transparent;border-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAA2UlEQVR4nO2ayw2DMBBE4yg90UoqSRFUQiupKpyWw8DKRgo77GreDftgvx0+kpf2cPgun583x2B6z+1o/Bm9kX+zWXkV98yj6O0rfQIvHDAzM8cKXJ1Ir+I4nz6B1nvboHlUAl7FkfQJbM9AdKVH8fZl13USQNhf4tH16yXAvvfPrp8+AQmwkQAbCbCRABsJsJEAGwmwkQAbCbCRABsJsNmdC42eVl/F2fXrJWCgafRZ6ej6dRJAw7v0Cbx9GekT2PWJe72pu3Qpy/SJ1aln41aX3SNDyv6tsgLHx3gBaebgjAAAAABJRU5ErkJggg==) 16 / 8px stretch}
   #bw{width:70px;height:10px;border:2px solid #cfe3ff;background:#0b1020;margin-top:2px;margin-left:auto}
   #bf{height:100%;width:100%;background:#5ad1ff}
-  #panel{position:absolute;inset:0;z-index:5;display:none;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:16px;overflow-y:auto;color:var(--cream)}
-  #panel h1{margin:6px 0 0;font-size:38px;line-height:1.05;letter-spacing:1px;color:var(--cream);text-shadow:0 0 18px #ffb347,3px 3px 0 var(--dark)}
-  #panel h2{margin:0;font-size:26px;text-shadow:2px 2px 0 var(--dark)}#panel p{margin:0;font-size:15px}
+  #panel{position:absolute;inset:0;z-index:5;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:16px;overflow-y:auto;color:var(--cream)}
+  #panel h1{margin:0;font-size:44px;line-height:1.0;letter-spacing:3px;text-transform:uppercase;color:var(--cream);text-shadow:4px 4px 0 #1a120c,-2px -2px 0 #1a120c,2px -2px 0 #1a120c,-2px 2px 0 #1a120c,0 0 26px rgba(255,180,80,.35)}
+  #panel h1 .acc{color:#e6c98a}
+  #panel h1 .hook{color:#c9a876}
+  #panel .sub{font-size:12px;letter-spacing:5px;text-transform:uppercase;color:#c9a876;text-shadow:2px 2px 0 #1a120c;margin:0}
+  #panel .menu{width:min(300px,86%);display:flex;flex-direction:column;gap:10px;margin-top:12px}
+  #panel .menu button{width:100%;font-size:18px;letter-spacing:2px;text-transform:uppercase;padding:14px 20px}
+  #panel .menu button.primary{background:#6b4a30}
+  #panel .fine{font-size:12px;opacity:.75;margin:0}
+  #panel h2{margin:0;font-size:30px;letter-spacing:3px;text-transform:uppercase;text-shadow:3px 3px 0 #1a120c,-1px -1px 0 #1a120c}#panel p{margin:0;font-size:15px}
   #bar{position:absolute;right:10px;bottom:10px;display:flex;gap:6px;z-index:3}
   #bar button{font-size:14px;padding:10px 14px}
   button{font:inherit;font-size:16px;padding:12px 20px;border:8px solid transparent;border-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAA2UlEQVR4nO2ayw2DMBBE4yg90UoqSRFUQiupKpyWw8DKRgo77GreDftgvx0+kpf2cPgun583x2B6z+1o/Bm9kX+zWXkV98yj6O0rfQIvHDAzM8cKXJ1Ir+I4nz6B1nvboHlUAl7FkfQJbM9AdKVH8fZl13USQNhf4tH16yXAvvfPrp8+AQmwkQAbCbCRABsJsJEAGwmwkQAbCbCRABsJsNmdC42eVl/F2fXrJWCgafRZ6ej6dRJAw7v0Cbx9GekT2PWJe72pu3Qpy/SJ1aln41aX3SNDyv6tsgLHx3gBaebgjAAAAABJRU5ErkJggg==) 16 / 8px stretch;background:#4a3020;color:var(--ink);cursor:pointer}
@@ -455,19 +462,19 @@ function spawn(any){
 function hideGame(){nightUI(0);$('stick').style.display='none';$('air').style.display='none';$('btn').style.display='none';$('home').style.display='none';$('hud').innerHTML='';$('msg').textContent=''}
 function showTitle(){
   phase='title';hideGame();delI=-1;keys={};
-  const p=$('panel');p.style.display='flex';p.style.justifyContent='';p.style.paddingRight='46%';p.style.background='linear-gradient(90deg,rgba(6,8,22,.78) 55%,rgba(6,8,22,0))';
-  p.innerHTML=`<h1>Haunted Fish Market</h1><p>${worlds.length?'Choose your world':'No worlds yet. Make one!'}</p>
-  <div class="list">${worlds.map((w,i)=>`<div class="card"><div><b>${esc(w.name)}</b><br><small>${SZ[w.size]} · ${DF[w.diff]}<br>Day ${w.day} · ${w.coins} coins</small></div>
+  const p=$('panel');p.style.display='flex';p.style.justifyContent='center';p.style.paddingRight='';p.style.background='linear-gradient(180deg,rgba(6,8,22,.45),rgba(6,8,22,.78) 70%,rgba(6,8,22,.92))';
+  p.innerHTML=`<h1>Haunted<br><span class="acc">Fish</span> Market</h1><p class="sub">Fish by night &middot; Sell by day</p>
+  <p class="fine">${worlds.length?'Choose your world':'No worlds yet. Make one!'}</p>
+  <div class="list">${worlds.map((w,i)=>`<div class="card"><div><b>${esc(w.name)}</b><br><small>${SZ[w.size]} &middot; ${DF[w.diff]}<br>Day ${w.day} &middot; ${w.coins} coins</small></div>
   <div><button class="wood sm" onclick="play(${i})">Play</button> <button class="wood sm" onclick="del(${i})">${delI===i?'Sure?':'X'}</button></div></div>`).join('')}</div>
-  <div class="bot"><button class="wood" onclick="showCreate(1)">Create new world</button></div>
-  <div class="bot" style="margin-top:8px"><button class="wood" onclick="showSettings()">Settings</button></div>
-  <p>Controls: ${ctrlMode==='desktop'?'Desktop (WASD + Space)':'Mobile (joystick + Use)'}</p>`;
+  <div class="menu"><button class="wood primary" onclick="showCreate(1)">Create new world</button><button class="wood" onclick="showSettings()">Settings</button></div>
+  <p class="fine">${ctrlMode==='desktop'?'Desktop &middot; WASD + Space':'Mobile &middot; Joystick + Use'}</p>`;
 }
 function del(i){if(delI===i){worlds.splice(i,1);persist();cur=null}else delI=i;showTitle2()}
 function showTitle2(){const k=delI;showTitle();delI=k;if(k>=0){const b=$('panel').querySelectorAll('.card')[k];if(b)b.querySelectorAll('button')[1].textContent='Sure?'}}
 function showSettings(){
   phase='settings';hideGame();keys={};
-  const p=$('panel');p.style.display='flex';p.style.justifyContent='';p.style.paddingRight='';p.style.background='rgba(6,8,22,.8)';
+  const p=$('panel');p.style.display='flex';p.style.justifyContent='';p.style.paddingRight='';p.style.background='linear-gradient(180deg,rgba(6,8,22,.55),rgba(6,8,22,.88))';
   p.innerHTML=`<h2>Settings</h2>
   <div class="box"><p>Controls</p><div class="row">
   <button class="wood sm opt${ctrlMode==='mobile'?' on':''}" onclick="setCtrl('mobile');showSettings()">Mobile</button>
@@ -480,7 +487,7 @@ function showCreate(fresh){
   if(fresh)cr={name:'World '+(worlds.length+1),size:1,diff:1,skin:0,hair:0,suit:0};
   const sw=(k,a)=>a.map((c,i)=>`<button class="sw${cr[k]===i?' on':''}" style="background:${c}" onclick="setOpt('${k}',${i})"></button>`).join('');
   const op=(k,a)=>a.map((n,i)=>`<button class="wood sm opt${cr[k]===i?' on':''}" onclick="setOpt('${k}',${i})">${n}</button>`).join('');
-  const p=$('panel');p.style.display='flex';p.style.justifyContent='';p.style.paddingRight='';p.style.background='rgba(6,8,22,.8)';
+  const p=$('panel');p.style.display='flex';p.style.justifyContent='';p.style.paddingRight='';p.style.background='linear-gradient(180deg,rgba(6,8,22,.55),rgba(6,8,22,.88))';
   p.innerHTML=`<h2>New world</h2>
   <div class="two"><div><div class="box"><p>World name</p><input id="wn" maxlength="18" value="${esc(cr.name)}" oninput="cr.name=this.value"></div>
   <div class="box"><p>World size</p><div class="row">${op('size',SZ)}</div></div>
@@ -1139,7 +1146,7 @@ function drawTitle2(){
   R(0,224,W,136,'#142348');for(let y=224;y<H;y+=24)R(0,y,W,24,`rgba(5,10,30,${(y-224)/220})`);
   for(let x=0;x<W;x+=8)R(x,224+Math.round(Math.sin(x*.1+t*2)*2),8,2,'#6c8fd0');
   for(let i=0;i<5;i++)R(574+Math.sin(t*2+i)*4,236+i*12,28-i*4,4,'rgba(241,236,208,.25)');
-  const by=Math.sin(t*2)*3,rx=380;
+  const by=Math.sin(t*2)*3,rx=36;
   R(rx,232+by,200,10,'#6b4a34');R(rx+8,242+by,184,6,'#4a3022');
   for(let i=0;i<5;i++)R(rx+4+i*40,184+by,36,20,i%2?'#e8d6c0':'#8a2f3f');
   R(rx,180+by,200,4,'#4a3022');R(rx+4,204+by,4,28,'#4a3022');R(rx+192,204+by,4,28,'#4a3022');
@@ -1147,7 +1154,7 @@ function drawTitle2(){
   for(const[ex,ey]of[[40,300],[600,320],[300,336],[460,300]])if(Math.sin(t+ex)>-.3){R(ex,ey,6,4,'#ff5a5a');R(ex+12,ey,6,4,'#ff5a5a')}
   fishSprite((t*20)%760-80,280+Math.sin(t*2)*6,T[2],1);
   for(let i=0;i<3;i++){g.fillStyle='rgba(190,205,240,.07)';g.fillRect((t*10+i*220)%760-100,200+i*36,200,16)}
-  drawDiver(120,180,{skin:0,hair:0,suit:0},0,1);
+  drawDiver(556,196,{skin:0,hair:0,suit:0},0,1);
 }
 function chibi(x,y,col,sad){
   x=Math.round(x);y=Math.round(y);
